@@ -499,6 +499,25 @@
       color: var(--female-color);
     }
 
+    .staff-chip[draggable="true"] {
+      cursor: grab;
+    }
+
+    .staff-chip[draggable="true"]:active {
+      cursor: grabbing;
+    }
+
+    .staff-chip.dragging {
+      opacity: 0.5;
+      transform: scale(0.95);
+    }
+
+    .assignment-card.drag-over {
+      border-color: var(--accent);
+      background: var(--bg-card-hover);
+      box-shadow: 0 0 10px var(--accent-glow);
+    }
+
     .skipped-area {
       padding: 10px 18px;
       background: var(--warning-bg);
@@ -2880,7 +2899,8 @@
           const staffChips = a.staffIds.map(sid => {
             const s = staffMap[sid];
             if (!s) return '';
-            return '<span class="staff-chip ' + s.gender + '">' + s.name + '</span>';
+            // 加入拖曳屬性
+            return `<span class="staff-chip ${s.gender}" draggable="true" ondragstart="handleDragStart(event, '${sid}', '${a.areaId}')" ondragend="handleDragEnd(event)">${s.name}</span>`;
           }).join('');
 
           const priorityClass = area.priority;
@@ -2891,13 +2911,14 @@
           const isOverflow = a.staffIds.length > area.maxPeople;
           const overflowTag = isOverflow ? '<span style="font-size:0.7rem;color:var(--info);margin-left:6px;">(增援)</span>' : '';
 
-          return '<div class="assignment-card">' +
-            '<div class="assignment-area">' +
-            '<span class="priority-dot ' + priorityClass + '"></span>' +
+          // 區域加入接收拖曳的事件
+          return `<div class="assignment-card" data-area-id="${a.areaId}" ondragover="handleDragOver(event)" ondragenter="handleDragEnter(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event, '${a.areaId}')">` +
+            `<div class="assignment-area">` +
+            `<span class="priority-dot ${priorityClass}"></span>` +
             area.name + genderTag + overflowTag +
-            '</div>' +
-            '<div class="assignment-staff">' + staffChips + '</div>' +
-            '</div>';
+            `</div>` +
+            `<div class="assignment-staff">${staffChips}</div>` +
+            `</div>`;
         }).join('');
       } else {
         html += '<div class="empty-state">⚠️ 尚無任何分配結果</div>';
@@ -3001,6 +3022,111 @@
     // ═══════════════════════════════════════
     // TAB 2: 人員管理
     // ═══════════════════════════════════════
+
+    // ─── Drag and Drop 邏輯 ───
+    let dragSrcStaffId = null;
+    let dragSrcAreaId = null;
+
+    window.handleDragStart = function (e, staffId, areaId) {
+      dragSrcStaffId = staffId;
+      dragSrcAreaId = areaId;
+      e.target.classList.add('dragging');
+      // 將被拖曳的資料放入 dataTransfer (非必要，但標準做法)
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', staffId);
+    };
+
+    window.handleDragEnd = function (e) {
+      e.target.classList.remove('dragging');
+      document.querySelectorAll('.assignment-card.drag-over').forEach(el => el.classList.remove('drag-over'));
+    };
+
+    window.handleDragOver = function (e) {
+      e.preventDefault(); // 必須阻擋預設行為才能觸發 drop
+      e.dataTransfer.dropEffect = 'move';
+    };
+
+    window.handleDragEnter = function (e) {
+      e.preventDefault();
+      const card = e.target.closest('.assignment-card');
+      if (card) {
+        card.classList.add('drag-over');
+      }
+    };
+
+    window.handleDragLeave = function (e) {
+      const card = e.target.closest('.assignment-card');
+      if (card) {
+        // 簡單判斷避免子元素閃爍
+        if (!card.contains(e.relatedTarget)) {
+          card.classList.remove('drag-over');
+        }
+      }
+    };
+
+    window.handleDrop = function (e, targetAreaId) {
+      e.preventDefault();
+      const card = e.target.closest('.assignment-card');
+      if (card) card.classList.remove('drag-over');
+
+      if (!dragSrcStaffId || !dragSrcAreaId) return;
+      if (dragSrcAreaId === targetAreaId) return; // 原地放下不處理
+
+      if (!currentScheduleState || !currentScheduleState.assignments) {
+        showToast('找不到排班資料', 'error');
+        return;
+      }
+
+      // 尋找來源與目標 Assignment
+      const assignments = currentScheduleState.assignments;
+      let srcAssignment = assignments.find(a => a.areaId === dragSrcAreaId);
+      let dstAssignment = assignments.find(a => a.areaId === targetAreaId);
+
+      // 極端防呆 (不應該發生)
+      if (!srcAssignment) return;
+      if (!dstAssignment) {
+        // 目標可能目前沒人而不在 assignments 陣列中，將其加入
+        dstAssignment = { areaId: targetAreaId, staffIds: [] };
+        assignments.push(dstAssignment);
+      }
+
+      // 檢查性別相容性等 (雖然拖曳是手動覆蓋，但為了防止犯錯，也可做提示)
+      const staff = StaffModel.getById(dragSrcStaffId);
+      const targetArea = AreaModel.getById(targetAreaId);
+
+      if (targetArea && targetArea.genderRestriction === 'female' && staff.gender === 'male') {
+        showToast('⚠️ 錯誤：男同事不能掃女廁！', 'error');
+        return;
+      }
+
+      if (targetArea && targetArea.name.includes('廁') && dstAssignment.staffIds.length >= targetArea.maxPeople) {
+        if (!confirm('⚠️ 警告：該廁所已有 ' + dstAssignment.staffIds.length + ' 人 (上限 ' + targetArea.maxPeople + ' 人)，確定要放入嗎？')) {
+          return;
+        }
+      }
+
+      // 從來源移除
+      srcAssignment.staffIds = srcAssignment.staffIds.filter(id => id !== dragSrcStaffId);
+      // 加入目標
+      dstAssignment.staffIds.push(dragSrcStaffId);
+
+      // 如果來源區空了，可以視情況清理陣列
+      if (srcAssignment.staffIds.length === 0) {
+        currentScheduleState.assignments = assignments.filter(a => a.areaId !== dragSrcAreaId);
+      }
+
+      // 重繪畫面
+      renderScheduleResult(currentScheduleState.assignments, currentScheduleState.skippedAreas, currentScheduleState.warnings);
+      showToast('已將 ' + staff.name + ' 移至 ' + targetArea.name, 'success');
+
+      // 提示儲存
+      document.getElementById('saveScheduleBtn').classList.add('btn-primary');
+      document.getElementById('saveScheduleBtn').classList.remove('btn-success');
+      document.getElementById('saveScheduleBtn').innerHTML = '💾 記得儲存變更';
+
+      dragSrcStaffId = null;
+      dragSrcAreaId = null;
+    };
 
     function renderStaffTable() {
       const staff = StaffModel.getAll();
