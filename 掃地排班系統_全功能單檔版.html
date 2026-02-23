@@ -2230,7 +2230,12 @@
           const getExpandableTargets = (ignoreMax = false) => {
             return assignments.filter(a => {
               const area = allAreas.find(ar => ar.id === a.areaId);
-              return area && (ignoreMax || a.staffIds.length < area.maxPeople);
+              if (!area) return false;
+              // 男女廁所嚴格限制不得超過 maxPeople (2人)
+              if (area.name.includes('廁')) {
+                return a.staffIds.length < area.maxPeople;
+              }
+              return ignoreMax || a.staffIds.length < area.maxPeople;
             }).sort((a, b) => {
               const aPri = priorityOverflowIds.includes(a.areaId) ? 0 : 1;
               const bPri = priorityOverflowIds.includes(b.areaId) ? 0 : 1;
