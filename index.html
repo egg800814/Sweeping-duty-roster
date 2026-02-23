@@ -1,0 +1,3623 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>掃地排班管理系統</title>
+  <meta name="description" content="公司每日清掃區域智慧排班工具">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+TC:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet">
+  <style>
+    /* assets/index.css — 掃地排班系統設計系統 */
+
+    /* ─── CSS Custom Properties ─── */
+    :root {
+      --bg-primary: #0f1117;
+      --bg-secondary: #1a1d28;
+      --bg-card: #222536;
+      --bg-card-hover: #2a2e42;
+      --bg-input: #181b26;
+      --border-color: #2e3348;
+      --border-focus: #6c63ff;
+      --text-primary: #e8eaf0;
+      --text-secondary: #8b8fa8;
+      --text-muted: #5a5f7a;
+      --accent: #6c63ff;
+      --accent-hover: #7f78ff;
+      --accent-glow: rgba(108, 99, 255, 0.25);
+      --success: #34d399;
+      --success-bg: rgba(52, 211, 153, 0.12);
+      --warning: #fbbf24;
+      --warning-bg: rgba(251, 191, 36, 0.12);
+      --danger: #f87171;
+      --danger-bg: rgba(248, 113, 113, 0.12);
+      --info: #60a5fa;
+      --info-bg: rgba(96, 165, 250, 0.12);
+      --male-color: #60a5fa;
+      --female-color: #f472b6;
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 16px;
+      --radius-xl: 20px;
+      --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+      --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+      --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.5);
+      --shadow-glow: 0 0 20px var(--accent-glow);
+      --transition: 0.2s ease;
+      --font-main: 'Inter', 'Noto Sans TC', system-ui, -apple-system, sans-serif;
+      --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+    }
+
+    /* ─── Reset & Base ─── */
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      font-size: 15px;
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: var(--font-main);
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      line-height: 1.6;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ─── App Shell ─── */
+    .app-container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    /* ─── Header ─── */
+    .app-header {
+      text-align: center;
+      padding: 32px 0 24px;
+    }
+
+    .app-header h1 {
+      font-size: 2rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--accent), #a78bfa, #f472b6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      letter-spacing: -0.02em;
+    }
+
+    .app-header .subtitle {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      margin-top: 6px;
+    }
+
+    /* ─── Tab Navigation ─── */
+    .tab-nav {
+      display: flex;
+      gap: 4px;
+      background: var(--bg-secondary);
+      border-radius: var(--radius-lg);
+      padding: 4px;
+      margin-bottom: 24px;
+      overflow-x: auto;
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 12px 16px;
+      border: none;
+      background: transparent;
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      font-weight: 600;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: all var(--transition);
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .tab-btn:hover {
+      color: var(--text-primary);
+      background: var(--bg-card);
+    }
+
+    .tab-btn.active {
+      background: var(--accent);
+      color: #fff;
+      box-shadow: var(--shadow-glow);
+    }
+
+    .tab-btn .tab-icon {
+      font-size: 1.1rem;
+    }
+
+    .tab-panel {
+      display: none;
+      animation: fadeSlideIn 0.3s ease;
+    }
+
+    .tab-panel.active {
+      display: block;
+    }
+
+    @keyframes fadeSlideIn {
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* ─── Cards ─── */
+    .card {
+      background: var(--bg-card);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border-color);
+      padding: 24px;
+      margin-bottom: 16px;
+      transition: all var(--transition);
+    }
+
+    .card:hover {
+      border-color: rgba(108, 99, 255, 0.3);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .card-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .card-title .icon {
+      font-size: 1.3rem;
+    }
+
+    /* ─── Buttons ─── */
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: var(--radius-md);
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all var(--transition);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-family: var(--font-main);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+      color: #fff;
+      box-shadow: var(--shadow-glow);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 0 30px var(--accent-glow);
+    }
+
+    .btn-success {
+      background: var(--success);
+      color: #0f1117;
+    }
+
+    .btn-success:hover {
+      filter: brightness(1.1);
+    }
+
+    .btn-danger {
+      background: var(--danger-bg);
+      color: var(--danger);
+      border: 1px solid rgba(248, 113, 113, 0.2);
+    }
+
+    .btn-danger:hover {
+      background: rgba(248, 113, 113, 0.2);
+    }
+
+    .btn-outline {
+      background: transparent;
+      color: var(--text-secondary);
+      border: 1px solid var(--border-color);
+    }
+
+    .btn-outline:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .btn-sm {
+      padding: 6px 14px;
+      font-size: 0.8rem;
+    }
+
+    .btn-icon {
+      width: 36px;
+      height: 36px;
+      padding: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-color);
+      background: transparent;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all var(--transition);
+      font-size: 1rem;
+    }
+
+    .btn-icon:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--accent-glow);
+    }
+
+    .btn-icon.danger:hover {
+      border-color: var(--danger);
+      color: var(--danger);
+      background: var(--danger-bg);
+    }
+
+    /* ─── Forms ─── */
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .form-input,
+    .form-select {
+      width: 100%;
+      padding: 10px 14px;
+      background: var(--bg-input);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      color: var(--text-primary);
+      font-size: 0.9rem;
+      font-family: var(--font-main);
+      transition: border-color var(--transition);
+    }
+
+    .form-input:focus,
+    .form-select:focus {
+      outline: none;
+      border-color: var(--border-focus);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+
+    .form-select {
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%238b8fa8' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      padding-right: 36px;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .form-row-3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 12px;
+    }
+
+    /* ─── Checkbox List (出勤勾選) ─── */
+    .checkbox-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 8px;
+    }
+
+    .checkbox-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      background: var(--bg-input);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: all var(--transition);
+      user-select: none;
+    }
+
+    .checkbox-item:hover {
+      border-color: var(--accent);
+      background: var(--bg-card-hover);
+    }
+
+    .checkbox-item.checked {
+      border-color: var(--accent);
+      background: var(--accent-glow);
+    }
+
+    .checkbox-item input[type="checkbox"] {
+      display: none;
+    }
+
+    .checkbox-mark {
+      width: 20px;
+      height: 20px;
+      border: 2px solid var(--border-color);
+      border-radius: 5px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all var(--transition);
+      flex-shrink: 0;
+    }
+
+    .checkbox-item.checked .checkbox-mark {
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .checkbox-item.checked .checkbox-mark::after {
+      content: '✓';
+      color: #fff;
+      font-size: 0.75rem;
+      font-weight: 700;
+    }
+
+    .checkbox-label {
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+
+    .gender-badge {
+      font-size: 0.7rem;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: 600;
+      margin-left: auto;
+    }
+
+    .gender-badge.male {
+      background: rgba(96, 165, 250, 0.15);
+      color: var(--male-color);
+    }
+
+    .gender-badge.female {
+      background: rgba(244, 114, 182, 0.15);
+      color: var(--female-color);
+    }
+
+    /* ─── Schedule Result ─── */
+    .schedule-result {
+      margin-top: 20px;
+    }
+
+    .assignment-card {
+      display: flex;
+      align-items: center;
+      padding: 14px 18px;
+      background: var(--bg-input);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      margin-bottom: 8px;
+      transition: all var(--transition);
+    }
+
+    .assignment-card:hover {
+      background: var(--bg-card-hover);
+      border-color: rgba(108, 99, 255, 0.2);
+    }
+
+    .assignment-area {
+      font-weight: 700;
+      min-width: 120px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .assignment-area .priority-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .priority-dot.daily {
+      background: var(--success);
+    }
+
+    .priority-dot.flexible {
+      background: var(--warning);
+    }
+
+    .priority-dot.optional {
+      background: var(--info);
+    }
+
+    .assignment-staff {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-left: auto;
+    }
+
+    .staff-chip {
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+
+    .staff-chip.male {
+      background: rgba(96, 165, 250, 0.15);
+      color: var(--male-color);
+    }
+
+    .staff-chip.female {
+      background: rgba(244, 114, 182, 0.15);
+      color: var(--female-color);
+    }
+
+    .staff-chip[draggable="true"] {
+      cursor: grab;
+      position: relative;
+      padding-right: 24px;
+    }
+
+    .staff-chip[draggable="true"]:active {
+      cursor: grabbing;
+    }
+
+    .staff-chip[draggable="true"]::after {
+      content: '×';
+      position: absolute;
+      right: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 1.1rem;
+      line-height: 1;
+      opacity: 0.5;
+      transition: opacity var(--transition);
+      cursor: pointer;
+    }
+
+    .staff-chip[draggable="true"]:hover::after {
+      opacity: 1;
+      color: var(--danger);
+    }
+
+    .staff-chip.dragging {
+      opacity: 0.5;
+      transform: scale(0.95);
+    }
+
+    .assignment-card.drag-over {
+      border-color: var(--accent);
+      background: var(--bg-card-hover);
+      box-shadow: 0 0 10px var(--accent-glow);
+    }
+
+    .skipped-area {
+      padding: 10px 18px;
+      background: var(--warning-bg);
+      border: 1px solid rgba(251, 191, 36, 0.15);
+      border-radius: var(--radius-md);
+      margin-bottom: 6px;
+      color: var(--warning);
+      font-size: 0.85rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .warning-item {
+      padding: 8px 14px;
+      background: var(--info-bg);
+      border-radius: var(--radius-sm);
+      margin-bottom: 6px;
+      color: var(--info);
+      font-size: 0.85rem;
+    }
+
+    /* ─── Table ─── */
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+    }
+
+    .data-table th {
+      text-align: left;
+      padding: 10px 14px;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .data-table td {
+      padding: 12px 14px;
+      border-bottom: 1px solid rgba(46, 51, 72, 0.5);
+      font-size: 0.9rem;
+    }
+
+    .data-table tr:hover td {
+      background: var(--bg-card-hover);
+    }
+
+    .data-table .actions {
+      display: flex;
+      gap: 6px;
+      justify-content: flex-end;
+    }
+
+    /* ─── Status Badges ─── */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .badge-success {
+      background: var(--success-bg);
+      color: var(--success);
+    }
+
+    .badge-warning {
+      background: var(--warning-bg);
+      color: var(--warning);
+    }
+
+    .badge-danger {
+      background: var(--danger-bg);
+      color: var(--danger);
+    }
+
+    .badge-info {
+      background: var(--info-bg);
+      color: var(--info);
+    }
+
+    /* ─── Planner Info ─── */
+    .planner-banner {
+      background: linear-gradient(135deg, rgba(108, 99, 255, 0.1), rgba(167, 139, 250, 0.08));
+      border: 1px solid rgba(108, 99, 255, 0.25);
+      border-radius: var(--radius-lg);
+      padding: 18px 24px;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .planner-banner .planner-icon {
+      font-size: 2rem;
+    }
+
+    .planner-banner .planner-info h3 {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    .planner-banner .planner-info .planner-name {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    .planner-banner .planner-info .deputy-note {
+      font-size: 0.8rem;
+      color: var(--warning);
+      margin-top: 2px;
+    }
+
+    /* ─── Rotation List ─── */
+    .rotation-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .rotation-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 18px;
+      background: var(--bg-input);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      transition: all var(--transition);
+    }
+
+    .rotation-item.current {
+      border-color: var(--accent);
+      background: var(--accent-glow);
+    }
+
+    .rotation-index {
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      background: var(--bg-card);
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--text-muted);
+    }
+
+    .rotation-item.current .rotation-index {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .rotation-name {
+      font-weight: 600;
+    }
+
+    .rotation-deputy {
+      margin-left: auto;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    /* ─── Modal ─── */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.25s ease;
+    }
+
+    .modal-overlay.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .modal {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-xl);
+      padding: 28px;
+      width: 90%;
+      max-width: 480px;
+      max-height: 85vh;
+      overflow-y: auto;
+      transform: scale(0.95) translateY(10px);
+      transition: transform 0.25s ease;
+    }
+
+    .modal-overlay.active .modal {
+      transform: scale(1) translateY(0);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .modal-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 1.3rem;
+      cursor: pointer;
+      padding: 4px;
+      transition: color var(--transition);
+    }
+
+    .modal-close:hover {
+      color: var(--text-primary);
+    }
+
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 20px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border-color);
+    }
+
+    /* ─── Date Picker ─── */
+    .date-picker {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .date-picker input[type="date"] {
+      padding: 10px 16px;
+      background: var(--bg-input);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      color: var(--text-primary);
+      font-size: 1rem;
+      font-family: var(--font-main);
+      font-weight: 600;
+    }
+
+    .date-picker input[type="date"]:focus {
+      outline: none;
+      border-color: var(--border-focus);
+    }
+
+    .date-picker input[type="date"]::-webkit-calendar-picker-indicator {
+      filter: invert(0.7);
+    }
+
+    /* ─── Stats ─── */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .stat-card {
+      background: var(--bg-input);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 14px;
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: var(--accent);
+    }
+
+    .stat-label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-top: 2px;
+    }
+
+    /* ─── Toast ─── */
+    .toast-container {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 2000;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .toast {
+      padding: 12px 20px;
+      border-radius: var(--radius-md);
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #fff;
+      box-shadow: var(--shadow-lg);
+      animation: toastIn 0.3s ease, toastOut 0.3s ease 2.7s forwards;
+      max-width: 360px;
+    }
+
+    .toast.success {
+      background: #059669;
+    }
+
+    .toast.error {
+      background: #dc2626;
+    }
+
+    .toast.info {
+      background: #2563eb;
+    }
+
+    @keyframes toastIn {
+      from {
+        opacity: 0;
+        transform: translateX(30px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    @keyframes toastOut {
+      from {
+        opacity: 1;
+        transform: translateX(0);
+      }
+
+      to {
+        opacity: 0;
+        transform: translateX(30px);
+      }
+    }
+
+    /* ─── Toolbar ─── */
+    .toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .toolbar-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    /* ─── Empty State ─── */
+    .empty-state {
+      text-align: center;
+      padding: 48px 20px;
+      color: var(--text-muted);
+    }
+
+    .empty-state .empty-icon {
+      font-size: 3rem;
+      margin-bottom: 12px;
+      opacity: 0.5;
+    }
+
+    .empty-state p {
+      font-size: 0.9rem;
+    }
+
+    /* ─── Print ─── */
+    @media print {
+      body {
+        background: #fff;
+        color: #000;
+      }
+
+      .app-header,
+      .tab-nav,
+      .toolbar,
+      .btn,
+      .toast-container,
+      .modal-overlay {
+        display: none !important;
+      }
+
+      .tab-panel {
+        display: block !important;
+      }
+
+      .card {
+        border: 1px solid #ccc;
+        box-shadow: none;
+        background: #fff;
+      }
+
+      .assignment-card {
+        background: #f9f9f9;
+        border-color: #ddd;
+      }
+
+      .staff-chip {
+        background: #eee;
+        color: #333;
+      }
+
+      .schedule-result {
+        page-break-inside: avoid;
+      }
+    }
+
+    /* ─── Responsive ─── */
+    @media (max-width: 768px) {
+      html {
+        font-size: 14px;
+      }
+
+      .app-container {
+        padding: 12px;
+      }
+
+      .tab-nav {
+        overflow-x: auto;
+        flex-wrap: nowrap;
+      }
+
+      .tab-btn {
+        padding: 10px 12px;
+        font-size: 0.82rem;
+      }
+
+      .form-row,
+      .form-row-3 {
+        grid-template-columns: 1fr;
+      }
+
+      .checkbox-grid {
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      }
+
+      .assignment-card {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+      }
+
+      .assignment-staff {
+        margin-left: 0;
+      }
+
+      .stats-row {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .planner-banner {
+        flex-direction: column;
+        text-align: center;
+      }
+
+      .data-table {
+        font-size: 0.8rem;
+      }
+
+      .data-table th,
+      .data-table td {
+        padding: 8px 10px;
+      }
+    }
+
+    /* ─── History ─── */
+    .history-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+
+    .history-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 16px;
+      background: var(--bg-input);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: all var(--transition);
+    }
+
+    .history-item:hover {
+      background: var(--bg-card-hover);
+      border-color: var(--accent);
+    }
+
+    .history-date {
+      font-weight: 700;
+      font-size: 0.9rem;
+    }
+
+    .history-summary {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+    }
+
+    /* ─── Scrollbar ─── */
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: var(--bg-primary);
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--border-color);
+      border-radius: 3px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--text-muted);
+    }
+
+    /* ─── Select All Button ─── */
+    .select-controls {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+  </style>
+  <style>
+    /* 讓人員分組更明顯的樣式 */
+    .dept-group {
+      break-inside: avoid;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="app-container">
+    <!-- ─── Header ─── -->
+    <header class="app-header">
+      <h1>🧹 掃地排班管理系統 <span
+          style="font-size:0.8rem; font-weight:400; opacity:0.7; border:1px solid; padding:2px 6px; border-radius:4px; vertical-align:middle; margin-left:8px;">V10.0</span>
+      </h1>
+      <p class="subtitle">每日清掃區域智慧排班 · 空間優先增援 · 跨設備一致 (Seed V10)</p>
+    </header>
+
+    <!-- ─── Tab Navigation ─── -->
+    <nav class="tab-nav" id="tabNav">
+      <button class="tab-btn active" data-tab="schedule">
+        <span class="tab-icon">📋</span> 每日排班
+      </button>
+      <button class="tab-btn" data-tab="staff">
+        <span class="tab-icon">👥</span> 人員管理
+      </button>
+      <button class="tab-btn" data-tab="areas">
+        <span class="tab-icon">🏢</span> 區域管理
+      </button>
+      <button class="tab-btn" data-tab="rotation">
+        <span class="tab-icon">🔄</span> 輪值設定
+      </button>
+      <button class="tab-btn" data-tab="history">
+        <span class="tab-icon">📜</span> 歷史紀錄
+      </button>
+      <button class="tab-btn" data-tab="settings">
+        <span class="tab-icon">⚙️</span> 資料管理
+      </button>
+    </nav>
+
+    <!-- ═══════════════════════════════════════ -->
+    <!-- TAB 1: 每日排班 -->
+    <!-- ═══════════════════════════════════════ -->
+    <div class="tab-panel active" id="panel-schedule">
+      <!-- 負責人資訊 -->
+      <div class="planner-banner" id="plannerBanner">
+        <span class="planner-icon">👤</span>
+        <div class="planner-info">
+          <h3>本週排班負責人</h3>
+          <div class="planner-name" id="plannerName">載入中...</div>
+          <div class="deputy-note" id="deputyNote" style="display:none;"></div>
+          <div style="font-size:0.75rem;color:var(--text-muted);margin-top:2px;">※ 排班負責人不參與掃地</div>
+        </div>
+      </div>
+
+      <!-- 日期 + 選項 -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title"><span class="icon">📅</span> 日期與選項</div>
+        </div>
+        <div class="date-picker" style="margin-bottom:16px;">
+          <input type="date" id="scheduleDate">
+          <button class="btn btn-outline btn-sm" id="todayBtn">今天</button>
+        </div>
+        <!-- 隔天放假 -->
+        <label class="checkbox-item" style="max-width:220px;margin-bottom:12px;" id="holidayLabel">
+          <input type="checkbox" id="holidayToggle">
+          <span class="checkbox-mark"></span>
+          <span class="checkbox-label">🏖️ 隔天放假（④陽台+1人）</span>
+        </label>
+        <!-- 可選區域 -->
+        <div style="margin-top:4px;">
+          <div style="font-size:0.8rem;color:var(--text-secondary);margin-bottom:6px;font-weight:600;">🔵
+            可選區域（已預設勾選，可手動排除）</div>
+          <div class="checkbox-grid" id="optionalToggles" style="gap:6px;"></div>
+        </div>
+      </div>
+
+      <!-- 出勤人員 -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title"><span class="icon">✅</span> 今日出勤人員（依部門）</div>
+          <div class="select-controls">
+            <button class="btn btn-outline btn-sm" id="selectDefaultStaff">預設</button>
+            <button class="btn btn-outline btn-sm" id="selectAllStaff">全選</button>
+            <button class="btn btn-outline btn-sm" id="deselectAllStaff">全不選</button>
+          </div>
+        </div>
+        <!-- 改為 Block Display 以支援標題 -->
+        <div id="staffCheckboxes" style="display:flex; flex-wrap:wrap; gap:16px;"></div>
+
+        <div class="stats-row" style="margin-top: 16px;">
+          <div class="stat-card">
+            <div class="stat-value" id="presentCount">0</div>
+            <div class="stat-label">今日出勤</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="maleCount">0</div>
+            <div class="stat-label">男性</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="femaleCount">0</div>
+            <div class="stat-label">女性</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 排班操作 -->
+      <div class="toolbar">
+        <button class="btn btn-primary" id="generateBtn">🎲 自動排班</button>
+        <div class="toolbar-actions">
+          <button class="btn btn-success btn-sm" id="saveScheduleBtn" style="display:none;">💾 儲存排班</button>
+          <button class="btn btn-outline btn-sm" id="addLateBtn" style="display:none;">🏃 追加人員</button>
+          <button class="btn btn-outline btn-sm" id="printBtn" style="display:none;">🖨️ 列印</button>
+        </div>
+      </div>
+
+      <!-- 排班結果 -->
+      <div class="schedule-result" id="scheduleResult"></div>
+    </div>
+
+    <!-- ═══════════════════════════════════════ -->
+    <!-- TAB 2: 人員管理 -->
+    <!-- ═══════════════════════════════════════ -->
+    <div class="tab-panel" id="panel-staff">
+      <div class="toolbar">
+        <div class="card-title"><span class="icon">👥</span> 人員管理</div>
+        <button class="btn btn-primary btn-sm" id="addStaffBtn">＋ 新增人員</button>
+      </div>
+      <div class="card" style="padding: 0; overflow-x: auto;">
+        <table class="data-table" id="staffTable">
+          <thead>
+            <tr>
+              <th>部門</th>
+              <th>姓名</th>
+              <th>性別</th>
+              <th>角色</th>
+              <th>狀態</th>
+              <th>預設出勤</th>
+              <th style="text-align:right;">操作</th>
+            </tr>
+          </thead>
+          <tbody id="staffTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 其餘 TAB 保持不變 (略) -->
+    <div class="tab-panel" id="panel-areas">
+      <div class="toolbar">
+        <div class="card-title"><span class="icon">🏢</span> 區域管理</div>
+        <button class="btn btn-primary btn-sm" id="addAreaBtn">＋ 新增區域</button>
+      </div>
+      <div class="card" style="padding: 0; overflow-x: auto;">
+        <table class="data-table" id="areaTable">
+          <thead>
+            <tr>
+              <th>區域名稱</th>
+              <th>樓層</th>
+              <th>優先級</th>
+              <th>性別限定</th>
+              <th>人數</th>
+              <th style="text-align:right;">操作</th>
+            </tr>
+          </thead>
+          <tbody id="areaTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="tab-panel" id="panel-rotation">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title"><span class="icon">🔄</span> 每週負責人輪值順序</div>
+          <div class="toolbar-actions">
+            <button class="btn btn-outline btn-sm" id="advanceWeekBtn">⏩ 推進下一週</button>
+          </div>
+        </div>
+        <p style="font-size:0.8rem;color:var(--text-muted);margin-bottom:12px;">代理人 = 輪值表中下一位有出勤的人。點擊可切換本週負責人。</p>
+        <div class="rotation-list" id="rotationList"></div>
+      </div>
+    </div>
+
+    <div class="tab-panel" id="panel-history">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title"><span class="icon">📜</span> 排班歷史紀錄</div>
+        </div>
+        <div class="history-list" id="historyList"></div>
+      </div>
+    </div>
+
+    <div class="tab-panel" id="panel-settings">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title"><span class="icon">💾</span> 資料備份與還原</div>
+        </div>
+        <div class="toolbar-actions" style="gap:10px;">
+          <button class="btn btn-primary btn-sm" id="exportBtn">📤 匯出 JSON</button>
+          <button class="btn btn-outline btn-sm" id="importBtn">📥 匯入 JSON</button>
+          <input type="file" id="importFile" accept=".json" style="display:none;">
+        </div>
+      </div>
+      <div class="card" style="margin-top:16px;">
+        <div class="card-header">
+          <div class="card-title"><span class="icon">🗑️</span> 危險操作</div>
+        </div>
+        <p style="color:var(--text-secondary);font-size:0.85rem;margin-bottom:14px;">清除所有資料將無法復原，請先匯出備份。</p>
+        <button class="btn btn-danger btn-sm" id="clearAllBtn">⚠️ 清除全部資料</button>
+      </div>
+      <div class="card" style="margin-top:16px;">
+        <div class="card-header">
+          <div class="card-title"><span class="icon">🔄</span> 重新載入預設資料</div>
+        </div>
+        <p style="color:var(--text-secondary);font-size:0.85rem;margin-bottom:14px;">清除現有資料後載入原始人員與區域設定。</p>
+        <button class="btn btn-outline btn-sm" id="resetDefaultBtn">重置為預設</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── Modal ─── -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal" id="modalContent"></div>
+  </div>
+
+  <!-- ─── Toast ─── -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- ─── Scripts ─── -->
+  <script>
+    const INLINE_DEFAULT_DATA = {
+      "staff": [
+        {
+          "id": "s01",
+          "name": "張書友",
+          "gender": "male",
+          "active": true,
+          "isDefault": false,
+          "role": "manager",
+          "floorRestriction": null,
+          "excludeAreas": [],
+          "department": "技術部"
+        },
+        {
+          "id": "s02",
+          "name": "莊達富",
+          "gender": "male",
+          "active": true,
+          "isDefault": true,
+          "role": "regular",
+          "floorRestriction": null,
+          "excludeAreas": [],
+          "department": "技術部"
+        },
+        {
+          "id": "s03",
+          "name": "許惠英",
+          "gender": "female",
+          "active": true,
+          "isDefault": false,
+          "role": "manager",
+          "floorRestriction": null,
+          "excludeAreas": [],
+          "department": "管理部"
+        },
+        {
+          "id": "s04",
+          "name": "顏宏光",
+          "gender": "male",
+          "active": true,
+          "isDefault": true,
+          "role": "regular",
+          "floorRestriction": null,
+          "excludeAreas": [],
+          "department": "技術部"
+        },
+        {
+          "id": "s05",
+          "name": "邱振威",
+          "gender": "male",
+          "active": true,
+          "isDefault": true,
+          "role": "regular",
+          "floorRestriction": null,
+          "excludeAreas": [],
+          "department": "技術部"
+        },
+        {
+          "id": "s06",
+          "name": "譚文男",
+          "gender": "male",
+          "active": true,
+          "isDefault": true,
+          "role": "regular",
+          "floorRestriction": null,
+          "excludeAreas": [],
+          "department": "技術部"
+        },
+        {
+          "id": "s07",
+          "name": "楊麗玉",
+          "gender": "female",
+          "active": true,
+          "isDefault": true,
+          "role": "regular",
+          "floorRestriction": null,
+          "excludeAreas": [],
+          "department": "管理部"
+        },
+        {
+          "id": "s08",
+          "name": "江辰平",
+          "gender": "female",
+          "active": true,
+          "isDefault": true,
+          "role": "regular",
+          "floorRestriction": null,
+          "excludeAreas": [],
+          "department": "管理部"
+        },
+        {
+          "id": "s09",
+          "name": "陳逸人",
+          "gender": "male",
+          "active": true,
+          "isDefault": false,
+          "role": "manager",
+          "floorRestriction": null,
+          "excludeAreas": [],
+          "department": "營業部"
+        },
+        {
+          "id": "s10",
+          "name": "黃聖文",
+          "gender": "female",
+          "active": true,
+          "isDefault": true,
+          "role": "regular",
+          "floorRestriction": null,
+          "excludeAreas": [],
+          "department": "營業部"
+        },
+        {
+          "id": "s11",
+          "name": "黃珮珊",
+          "gender": "female",
+          "active": true,
+          "isDefault": true,
+          "role": "regular",
+          "floorRestriction": null,
+          "excludeAreas": [],
+          "department": "管理部"
+        },
+        {
+          "id": "s12",
+          "name": "黃智傑",
+          "gender": "male",
+          "active": true,
+          "isDefault": true,
+          "role": "regular",
+          "floorRestriction": null,
+          "excludeAreas": [],
+          "department": "技術部"
+        },
+        {
+          "id": "s13",
+          "name": "陳瑞雯",
+          "gender": "female",
+          "active": true,
+          "isDefault": true,
+          "role": "regular",
+          "floorRestriction": null,
+          "excludeAreas": [],
+          "department": "營業部"
+        },
+        {
+          "id": "s14",
+          "name": "范孝慈",
+          "gender": "female",
+          "active": true,
+          "isDefault": true,
+          "role": "regular",
+          "floorRestriction": null,
+          "excludeAreas": [],
+          "department": "管理部"
+        },
+        {
+          "id": "s15",
+          "name": "李承哲",
+          "gender": "male",
+          "active": true,
+          "isDefault": true,
+          "role": "regular",
+          "floorRestriction": null,
+          "excludeAreas": [],
+          "department": "技術部"
+        },
+        {
+          "id": "s16",
+          "name": "許漢德",
+          "gender": "male",
+          "active": true,
+          "isDefault": true,
+          "role": "regular",
+          "floorRestriction": null,
+          "excludeAreas": [],
+          "department": "技術部"
+        },
+        {
+          "id": "s17",
+          "name": "李哲旭",
+          "gender": "male",
+          "active": true,
+          "isDefault": true,
+          "role": "regular",
+          "floorRestriction": null,
+          "excludeAreas": [],
+          "department": "技術部"
+        },
+        {
+          "id": "s18",
+          "name": "陳妍淇",
+          "gender": "female",
+          "active": true,
+          "isDefault": true,
+          "role": "regular",
+          "floorRestriction": null,
+          "excludeAreas": [],
+          "department": "管理部"
+        },
+        {
+          "id": "s19",
+          "name": "洪立恩",
+          "gender": "male",
+          "active": true,
+          "isDefault": true,
+          "role": "regular",
+          "floorRestriction": null,
+          "excludeAreas": [],
+          "department": "營業部"
+        },
+        {
+          "id": "s20",
+          "name": "簡鴻彬",
+          "gender": "male",
+          "active": true,
+          "isDefault": true,
+          "role": "regular",
+          "floorRestriction": null,
+          "excludeAreas": [],
+          "department": "技術部"
+        },
+        {
+          "id": "s21",
+          "name": "蔡沛容",
+          "gender": "female",
+          "active": true,
+          "isDefault": true,
+          "role": "regular",
+          "floorRestriction": null,
+          "excludeAreas": [],
+          "department": "營業部"
+        },
+        {
+          "id": "s22",
+          "name": "張芮溱",
+          "gender": "female",
+          "active": true,
+          "isDefault": true,
+          "role": "regular",
+          "floorRestriction": 2,
+          "excludeAreas": [
+            "a4"
+          ],
+          "department": "管理部"
+        },
+        {
+          "id": "s23",
+          "name": "林聖家",
+          "gender": "male",
+          "active": true,
+          "isDefault": true,
+          "role": "regular",
+          "floorRestriction": null,
+          "excludeAreas": [],
+          "department": "新事業部"
+        },
+        {
+          "id": "s24",
+          "name": "徐明億",
+          "gender": "male",
+          "active": true,
+          "isDefault": true,
+          "role": "regular",
+          "floorRestriction": null,
+          "excludeAreas": [],
+          "department": "技術部"
+        },
+        {
+          "id": "s25",
+          "name": "薛育政",
+          "gender": "male",
+          "active": true,
+          "isDefault": true,
+          "role": "regular",
+          "floorRestriction": null,
+          "excludeAreas": [],
+          "department": "技術部"
+        },
+        {
+          "id": "s26",
+          "name": "林邗潁",
+          "gender": "male",
+          "active": true,
+          "isDefault": true,
+          "role": "regular",
+          "floorRestriction": null,
+          "excludeAreas": [],
+          "department": "技術部"
+        },
+        {
+          "id": "s27",
+          "name": "張東華",
+          "gender": "female",
+          "active": true,
+          "isDefault": true,
+          "role": "regular",
+          "floorRestriction": null,
+          "excludeAreas": [],
+          "department": "新事業部"
+        },
+        {
+          "id": "s28",
+          "name": "姚香均",
+          "gender": "female",
+          "active": true,
+          "isDefault": true,
+          "role": "regular",
+          "floorRestriction": null,
+          "excludeAreas": [],
+          "department": "新事業部"
+        }
+      ],
+      "areas": [
+        {
+          "id": "a1",
+          "name": "2樓_廚房",
+          "floor": 2,
+          "priority": "daily",
+          "genderRestriction": "female",
+          "minPeople": 1,
+          "maxPeople": 2,
+          "order": 1,
+          "holidayBoost": false
+        },
+        {
+          "id": "a2",
+          "name": "2樓_女廁",
+          "floor": 2,
+          "priority": "daily",
+          "genderRestriction": "female",
+          "minPeople": 1,
+          "maxPeople": 2,
+          "order": 2,
+          "holidayBoost": false
+        },
+        {
+          "id": "a3",
+          "name": "2樓_男廁",
+          "floor": 2,
+          "priority": "daily",
+          "genderRestriction": "malePreferred",
+          "minPeople": 1,
+          "maxPeople": 2,
+          "order": 3,
+          "holidayBoost": false
+        },
+        {
+          "id": "a4",
+          "name": "2樓_陽台",
+          "floor": 2,
+          "priority": "daily",
+          "genderRestriction": "malePreferred",
+          "minPeople": 1,
+          "maxPeople": 4,
+          "order": 4,
+          "holidayBoost": true
+        },
+        {
+          "id": "a5",
+          "name": "1樓_食堂",
+          "floor": 1,
+          "priority": "daily",
+          "genderRestriction": "none",
+          "minPeople": 1,
+          "maxPeople": 1,
+          "order": 5,
+          "holidayBoost": false
+        },
+        {
+          "id": "a6",
+          "name": "1樓_男廁",
+          "floor": 1,
+          "priority": "daily",
+          "genderRestriction": "malePreferred",
+          "minPeople": 1,
+          "maxPeople": 2,
+          "order": 6,
+          "holidayBoost": false
+        },
+        {
+          "id": "a7",
+          "name": "1樓_女廁",
+          "floor": 1,
+          "priority": "daily",
+          "genderRestriction": "female",
+          "minPeople": 1,
+          "maxPeople": 2,
+          "order": 7,
+          "holidayBoost": false
+        },
+        {
+          "id": "a8",
+          "name": "2樓_走廊、玄關、應接室",
+          "floor": 2,
+          "priority": "flexible",
+          "genderRestriction": "none",
+          "minPeople": 1,
+          "maxPeople": 1,
+          "order": 8,
+          "holidayBoost": false
+        },
+        {
+          "id": "a9",
+          "name": "2樓_事務所全區",
+          "floor": 2,
+          "priority": "flexible",
+          "genderRestriction": "none",
+          "minPeople": 1,
+          "maxPeople": 6,
+          "order": 9,
+          "holidayBoost": false
+        },
+        {
+          "id": "a10",
+          "name": "2樓_多目的室",
+          "floor": 2,
+          "priority": "optional",
+          "genderRestriction": "none",
+          "minPeople": 1,
+          "maxPeople": 1,
+          "order": 10,
+          "holidayBoost": false
+        },
+        {
+          "id": "a11",
+          "name": "1樓_陽台",
+          "floor": 1,
+          "priority": "flexible",
+          "genderRestriction": "none",
+          "minPeople": 1,
+          "maxPeople": 1,
+          "order": 11,
+          "holidayBoost": false
+        },
+        {
+          "id": "a12",
+          "name": "1樓_會議室1",
+          "floor": 1,
+          "priority": "optional",
+          "genderRestriction": "none",
+          "minPeople": 1,
+          "maxPeople": 1,
+          "order": 12,
+          "holidayBoost": false
+        },
+        {
+          "id": "a13",
+          "name": "1樓_走廊",
+          "floor": 1,
+          "priority": "flexible",
+          "genderRestriction": "none",
+          "minPeople": 1,
+          "maxPeople": 1,
+          "order": 13,
+          "holidayBoost": false
+        },
+        {
+          "id": "a14",
+          "name": "1~2樓_樓梯",
+          "floor": 0,
+          "priority": "flexible",
+          "genderRestriction": "none",
+          "minPeople": 1,
+          "maxPeople": 1,
+          "order": 14,
+          "holidayBoost": false
+        },
+        {
+          "id": "a15",
+          "name": "1樓_無塵室更衣室",
+          "floor": 1,
+          "priority": "flexible",
+          "genderRestriction": "none",
+          "minPeople": 1,
+          "maxPeople": 1,
+          "order": 15,
+          "holidayBoost": false
+        },
+        {
+          "id": "a16",
+          "name": "1樓_女子更衣室",
+          "floor": 1,
+          "priority": "flexible",
+          "genderRestriction": "female",
+          "minPeople": 1,
+          "maxPeople": 1,
+          "order": 16,
+          "holidayBoost": false
+        }
+      ],
+      "plannerRotation": {
+        "planners": [
+          "s11",
+          "s07",
+          "s08",
+          "s14",
+          "s18",
+          "s22",
+          "s10",
+          "s13",
+          "s19",
+          "s21",
+          "s23",
+          "s27",
+          "s28",
+          "s06",
+          "s05",
+          "s02",
+          "s04",
+          "s12",
+          "s15",
+          "s16",
+          "s17",
+          "s20",
+          "s24",
+          "s25",
+          "s26"
+        ],
+        "currentIndex": 0
+      }
+    };
+    function initializeInlineData() {
+      const STORAGE_KEYS = {
+        STAFF: 'cleaning_staff',
+        AREAS: 'cleaning_areas',
+        PLANNER: 'cleaning_planner_rotation',
+        SCHEDULES: 'cleaning_schedules',
+        DATA_VER: 'cleaning_data_version',
+      };
+      const DATA_VERSION = 9;
+
+      const savedVer = localStorage.getItem(STORAGE_KEYS.DATA_VER);
+
+      // 如果版本不符或完全沒資料
+      if (!savedVer || parseInt(savedVer) < DATA_VERSION) {
+        console.log('單檔版初始化或版本升級 (v' + (savedVer || 0) + ' -> v' + DATA_VERSION + ')');
+        // 如果是升級且原本有人員資料，可以考慮保留，但為了安全我們先清空（因版本升級通常涉及 schema 變動）
+        // 或者我們只在完全沒資料時才初始化
+        if (!savedVer || parseInt(savedVer) < DATA_VERSION) {
+          Object.values(STORAGE_KEYS).forEach(k => localStorage.removeItem(k));
+        }
+      }
+
+      const existingStaff = localStorage.getItem(STORAGE_KEYS.STAFF);
+      if (!existingStaff || JSON.parse(existingStaff).length === 0) {
+        if (INLINE_DEFAULT_DATA.staff) localStorage.setItem(STORAGE_KEYS.STAFF, JSON.stringify(INLINE_DEFAULT_DATA.staff));
+        if (INLINE_DEFAULT_DATA.areas) localStorage.setItem(STORAGE_KEYS.AREAS, JSON.stringify(INLINE_DEFAULT_DATA.areas));
+        if (INLINE_DEFAULT_DATA.plannerRotation) localStorage.setItem(STORAGE_KEYS.PLANNER, JSON.stringify(INLINE_DEFAULT_DATA.plannerRotation));
+        localStorage.setItem(STORAGE_KEYS.DATA_VER, String(DATA_VERSION));
+        console.log('單檔版已載入內嵌預設資料');
+      }
+    }
+    // program/models.js — 資料模型與 localStorage 存取層
+
+    const DATA_VERSION = 9; // v9: 更正黃珮珊部門、張東華排序調整
+
+    const STORAGE_KEYS = {
+      STAFF: 'cleaning_staff',
+      AREAS: 'cleaning_areas',
+      PLANNER: 'cleaning_planner_rotation',
+      SCHEDULES: 'cleaning_schedules',
+      DATA_VER: 'cleaning_data_version',
+    };
+
+    // ─── UUID 產生器 ───
+    function generateId() {
+      return 'id_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 8);
+    }
+
+    // ─── 通用 localStorage 操作 ───
+    function loadData(key, fallback = []) {
+      try {
+        const raw = localStorage.getItem(key);
+        return raw ? JSON.parse(raw) : fallback;
+      } catch {
+        return fallback;
+      }
+    }
+
+    function saveData(key, data) {
+      localStorage.setItem(key, JSON.stringify(data));
+    }
+
+    // ─── Staff CRUD ───
+    const StaffModel = {
+      getAll() {
+        return loadData(STORAGE_KEYS.STAFF, []);
+      },
+
+      getActive() {
+        return this.getAll().filter(s => s.active);
+      },
+
+      getById(id) {
+        return this.getAll().find(s => s.id === id) || null;
+      },
+
+      add(staff) {
+        const list = this.getAll();
+        const newStaff = {
+          id: generateId(),
+          name: staff.name,
+          gender: staff.gender || 'male',
+          active: staff.active !== undefined ? staff.active : true,
+          isDefault: staff.isDefault !== undefined ? staff.isDefault : true,
+          role: staff.role || 'regular',
+          floorRestriction: staff.floorRestriction || null,
+          excludeAreas: staff.excludeAreas || [],
+          department: staff.department || '未分類',
+        };
+        list.push(newStaff);
+        saveData(STORAGE_KEYS.STAFF, list);
+        return newStaff;
+      },
+
+      update(id, updates) {
+        const list = this.getAll();
+        const idx = list.findIndex(s => s.id === id);
+        if (idx === -1) return null;
+        list[idx] = { ...list[idx], ...updates };
+        saveData(STORAGE_KEYS.STAFF, list);
+        return list[idx];
+      },
+
+      remove(id) {
+        const list = this.getAll().filter(s => s.id !== id);
+        saveData(STORAGE_KEYS.STAFF, list);
+      },
+
+      save(list) {
+        saveData(STORAGE_KEYS.STAFF, list);
+      },
+    };
+
+    // ─── Area CRUD ───
+    const AreaModel = {
+      getAll() {
+        return loadData(STORAGE_KEYS.AREAS, []).sort((a, b) => a.order - b.order);
+      },
+
+      getById(id) {
+        return this.getAll().find(a => a.id === id) || null;
+      },
+
+      add(area) {
+        const list = this.getAll();
+        const newArea = {
+          id: generateId(),
+          name: area.name,
+          priority: area.priority || 'daily',
+          genderRestriction: area.genderRestriction || 'none',
+          minPeople: area.minPeople || 1,
+          maxPeople: area.maxPeople || 1,
+          order: area.order || list.length + 1,
+          floor: area.floor !== undefined ? area.floor : 0,
+          holidayBoost: area.holidayBoost || false,
+        };
+        list.push(newArea);
+        saveData(STORAGE_KEYS.AREAS, list);
+        return newArea;
+      },
+
+      update(id, updates) {
+        const list = this.getAll();
+        const idx = list.findIndex(a => a.id === id);
+        if (idx === -1) return null;
+        list[idx] = { ...list[idx], ...updates };
+        saveData(STORAGE_KEYS.AREAS, list);
+        return list[idx];
+      },
+
+      remove(id) {
+        const list = this.getAll().filter(a => a.id !== id);
+        saveData(STORAGE_KEYS.AREAS, list);
+      },
+
+      save(list) {
+        saveData(STORAGE_KEYS.AREAS, list);
+      },
+    };
+
+    // ─── Planner Rotation ───
+    const PlannerModel = {
+      get() {
+        return loadData(STORAGE_KEYS.PLANNER, {
+          planners: [],
+          currentIndex: 0,
+        });
+      },
+
+      save(data) {
+        saveData(STORAGE_KEYS.PLANNER, data);
+      },
+
+      getCurrentPlanner(presentStaffIds = null) {
+        const rot = this.get();
+        if (rot.planners.length === 0) return null;
+        const idx = rot.currentIndex % rot.planners.length;
+        const plannerId = rot.planners[idx];
+
+        if (presentStaffIds && !presentStaffIds.includes(plannerId)) {
+          for (let i = 1; i < rot.planners.length; i++) {
+            const nextIdx = (idx + i) % rot.planners.length;
+            const nextId = rot.planners[nextIdx];
+            if (presentStaffIds.includes(nextId)) {
+              return { id: nextId, isDeputy: true, originalId: plannerId };
+            }
+          }
+          return null;
+        }
+
+        return { id: plannerId, isDeputy: false, originalId: plannerId };
+      },
+
+      advanceWeek() {
+        const rot = this.get();
+        if (rot.planners.length === 0) return;
+        rot.currentIndex = (rot.currentIndex + 1) % rot.planners.length;
+        this.save(rot);
+      },
+    };
+
+    // ─── Schedule Records ───
+    const ScheduleModel = {
+      getAll() {
+        return loadData(STORAGE_KEYS.SCHEDULES, []);
+      },
+
+      getByDate(dateStr) {
+        return this.getAll().find(s => s.date === dateStr) || null;
+      },
+
+      save(schedule) {
+        const list = this.getAll().filter(s => s.date !== schedule.date);
+        list.push(schedule);
+        list.sort((a, b) => b.date.localeCompare(a.date));
+        saveData(STORAGE_KEYS.SCHEDULES, list);
+      },
+
+      remove(dateStr) {
+        const list = this.getAll().filter(s => s.date !== dateStr);
+        saveData(STORAGE_KEYS.SCHEDULES, list);
+      },
+
+      getRecent(n = 30) {
+        return this.getAll().slice(0, n);
+      },
+    };
+
+    // ─── 公平性 + 區域歷史 ───
+    const HistoryModel = {
+      getAssignmentCounts(days = 14) {
+        const schedules = ScheduleModel.getAll();
+        const cutoff = new Date();
+        cutoff.setDate(cutoff.getDate() - days);
+        const cutoffStr = cutoff.toISOString().slice(0, 10);
+
+        const counts = {};
+        for (const sched of schedules) {
+          if (sched.date < cutoffStr) continue;
+          for (const assign of (sched.assignments || [])) {
+            for (const sid of (assign.staffIds || [])) {
+              counts[sid] = (counts[sid] || 0) + 1;
+            }
+          }
+        }
+        return counts;
+      },
+
+      getRecentAreasByStaff(days = 7) {
+        const schedules = ScheduleModel.getAll();
+        const cutoff = new Date();
+        cutoff.setDate(cutoff.getDate() - days);
+        const cutoffStr = cutoff.toISOString().slice(0, 10);
+
+        const map = {};
+        for (const sched of schedules) {
+          if (sched.date < cutoffStr) continue;
+          for (const assign of (sched.assignments || [])) {
+            for (const sid of (assign.staffIds || [])) {
+              if (!map[sid]) map[sid] = new Set();
+              map[sid].add(assign.areaId);
+            }
+          }
+        }
+        return map;
+      },
+    };
+
+    // ─── 初始化預設資料（含版本檢查） ───
+    async function initializeDefaultData() {
+      const savedVer = parseInt(localStorage.getItem(STORAGE_KEYS.DATA_VER) || '0');
+
+      // 若版本已經符合，直接結束
+      if (savedVer >= DATA_VERSION) {
+        return;
+      }
+
+      // 版本不同 → 嘗試從伺服器取得預設資料
+      try {
+        const resp = await fetch('./config/default_data.json?v=' + Date.now());
+        if (resp.ok) {
+          const data = await resp.json();
+
+          // 成功取得預設資料，這才清空舊資料並覆蓋
+          console.log('資料版本升級 v' + savedVer + ' → v' + DATA_VERSION + '，已從伺服器載入預設資料。');
+          Object.values(STORAGE_KEYS).forEach(key => localStorage.removeItem(key));
+
+          if (data.staff) StaffModel.save(data.staff);
+          if (data.areas) AreaModel.save(data.areas);
+          if (data.plannerRotation) PlannerModel.save(data.plannerRotation);
+
+          localStorage.setItem(STORAGE_KEYS.DATA_VER, String(DATA_VERSION));
+        } else {
+          throw new Error('伺服器回傳狀態異常');
+        }
+      } catch (e) {
+        // 取得失敗 (例如在 file:// 下)
+        console.warn('無法連線至伺服器載入預設資料:', e.message);
+
+        // 如果目前已經有手動匯入的人員資料，我們就直接把版本號升上去，不要再嘗試重置
+        if (StaffModel.getAll().length > 0) {
+          console.log('偵測到已有本地資料，停止重置邏輯並更新版本號至 v' + DATA_VERSION);
+          localStorage.setItem(STORAGE_KEYS.DATA_VER, String(DATA_VERSION));
+        }
+      }
+    }
+  </script>
+  <script>// program/scheduler.js — 核心排班演算法
+
+    // ─── 確定性隨機產生器 (LCG) ───
+    class SeededRandom {
+      constructor(seed) {
+        this.seed = seed || 12345;
+      }
+      next() {
+        this.seed = (this.seed * 9301 + 49297) % 233280;
+        return this.seed / 233280;
+      }
+    }
+
+    const Scheduler = {
+      generate(presentStaffIds, dateStr, options = {}) {
+        const {
+          isHolidayTomorrow = false,
+          enabledOptionalAreas = [],
+          plannerId = null,
+          lockedAssignments = [],
+          lockedStaffIds = [],
+        } = options;
+
+        // ── 初始化種子 ──
+        const sortedPresentIds = [...presentStaffIds].sort().join(',');
+        const seedInput = dateStr + sortedPresentIds;
+        let seed = 5381;
+        for (let i = 0; i < seedInput.length; i++) {
+          seed = ((seed << 5) + seed) + seedInput.charCodeAt(i);
+        }
+        const rng = new SeededRandom(Math.abs(seed));
+
+        const allAreas = AreaModel.getAll();
+        const allStaff = StaffModel.getAll();
+        const staffMap = {};
+        allStaff.forEach(s => (staffMap[s.id] = s));
+
+        const cleaningStaffIds = presentStaffIds.filter(id => id !== plannerId);
+        const assignCounts = HistoryModel.getAssignmentCounts(14);
+        const recentAreas = HistoryModel.getRecentAreasByStaff(7);
+        const availablePool = new Set(cleaningStaffIds.filter(id => !lockedStaffIds.includes(id)));
+
+        let assignments = [...lockedAssignments.map(a => ({ ...a, staffIds: [...a.staffIds] }))];
+        const lockedAreaIds = new Set(lockedAssignments.map(a => a.areaId));
+        const skippedAreas = [];
+        const warnings = [];
+
+        const dailyAreas = allAreas.filter(a => a.priority === 'daily' && !lockedAreaIds.has(a.id));
+        const flexibleAreas = allAreas.filter(a => a.priority === 'flexible' && !lockedAreaIds.has(a.id));
+        const optionalAreas = allAreas.filter(a => a.priority === 'optional' && !lockedAreaIds.has(a.id));
+
+        // ── 階段 1：必掃區域 (強性別限制) ──
+        for (const area of dailyAreas.filter(a => a.genderRestriction !== 'none')) {
+          const effectiveMax = (area.holidayBoost && isHolidayTomorrow) ? area.maxPeople : undefined;
+          const result = this._assignArea(area, availablePool, staffMap, assignCounts, recentAreas, rng, effectiveMax);
+          if (result.staffIds.length > 0) {
+            assignments.push({ areaId: area.id, staffIds: result.staffIds });
+            result.staffIds.forEach(id => availablePool.delete(id));
+          } else {
+            warnings.push('⚠️ ' + area.name + '：無法安排符合條件的人員');
+          }
+        }
+
+        // ── 階段 2：必掃區域 (無性別限制) ──
+        for (const area of dailyAreas.filter(a => a.genderRestriction === 'none')) {
+          const result = this._assignArea(area, availablePool, staffMap, assignCounts, recentAreas, rng);
+          if (result.staffIds.length > 0) {
+            assignments.push({ areaId: area.id, staffIds: result.staffIds });
+            result.staffIds.forEach(id => availablePool.delete(id));
+          } else {
+            warnings.push('⚠️ ' + area.name + '：人員不足，無法安排必掃區域');
+          }
+        }
+
+        // ── 階段 3：彈性區域 (含 a16 優先點) ──
+        const sortedFlexible = flexibleAreas.sort((a, b) => {
+          if (a.id === 'a16') return -1;
+          if (b.id === 'a16') return 1;
+          return (a.order || 0) - (b.order || 0);
+        });
+
+        for (const area of sortedFlexible) {
+          if (availablePool.size === 0) { skippedAreas.push(area.id); continue; }
+          const result = this._assignArea(area, availablePool, staffMap, assignCounts, recentAreas, rng);
+          if (result.staffIds.length > 0) {
+            assignments.push({ areaId: area.id, staffIds: result.staffIds });
+            result.staffIds.forEach(id => availablePool.delete(id));
+          } else {
+            skippedAreas.push(area.id);
+          }
+        }
+
+        // ── 階段 4：可選區域 ──
+        for (const area of optionalAreas) {
+          if (!enabledOptionalAreas.includes(area.id) || availablePool.size === 0) {
+            skippedAreas.push(area.id);
+            continue;
+          }
+          // 優化：對於勾選的可選區域，即便總人數不多，也要嘗試分配（在 _decideHeadcount 會給予 minPeople）
+          const result = this._assignArea(area, availablePool, staffMap, assignCounts, recentAreas, rng);
+          if (result.staffIds.length > 0) {
+            assignments.push({ areaId: area.id, staffIds: result.staffIds });
+            result.staffIds.forEach(id => availablePool.delete(id));
+          } else {
+            skippedAreas.push(area.id);
+          }
+        }
+
+        // ── 階段 5：Overfill 強制分配 (依空間大小優先增援) ──
+        if (availablePool.size > 0) {
+          const remainingStaff = [...availablePool];
+          const scoredRemaining = remainingStaff.map(id => ({ id, score: rng.next() }));
+          scoredRemaining.sort((a, b) => a.score - b.score);
+
+          // 定義優先增援區域 (事務所 a9, 2F陽台 a4)
+          const priorityOverflowIds = ['a9', 'a4'];
+
+          const getExpandableTargets = (ignoreMax = false) => {
+            return assignments.filter(a => {
+              const area = allAreas.find(ar => ar.id === a.areaId);
+              if (!area) return false;
+              // 男女廁所嚴格限制不得超過 maxPeople (2人)
+              if (area.name.includes('廁')) {
+                return a.staffIds.length < area.maxPeople;
+              }
+              return ignoreMax || a.staffIds.length < area.maxPeople;
+            }).sort((a, b) => {
+              const aPri = priorityOverflowIds.includes(a.areaId) ? 0 : 1;
+              const bPri = priorityOverflowIds.includes(b.areaId) ? 0 : 1;
+              if (aPri !== bPri) return aPri - bPri;
+              const arA = allAreas.find(ar => ar.id === a.areaId);
+              const arB = allAreas.find(ar => ar.id === b.areaId);
+              return (arA?.order || 99) - (arB?.order || 99);
+            });
+          };
+
+          let assignIdx = 0;
+          for (const item of scoredRemaining) {
+            const staffId = item.id;
+            let validTargets = getExpandableTargets(false);
+
+            if (validTargets.length === 0) {
+              validTargets = getExpandableTargets(true);
+            }
+
+            if (validTargets.length === 0 && allAreas.length > 0) {
+              assignments.push({ areaId: allAreas[0].id, staffIds: [] });
+              validTargets = getExpandableTargets(true);
+            }
+
+            if (validTargets.length === 0) continue;
+
+            const s = staffMap[staffId];
+            let foundTarget = null;
+
+            // 性別相容性檢查
+            const checkCompatibility = (targetAssignment, staffGender) => {
+              const area = allAreas.find(ar => ar.id === targetAssignment.areaId);
+              if (!area) return false;
+
+              // 1. 女廁：嚴格禁止男生進入
+              if (area.genderRestriction === 'female' && staffGender === 'male') {
+                return false;
+              }
+
+              // 2. 男廁：不允許男女混掃
+              if (area.genderRestriction === 'malePreferred') {
+                const hasMale = targetAssignment.staffIds.some(id => staffMap[id].gender === 'male');
+                const hasFemale = targetAssignment.staffIds.some(id => staffMap[id].gender === 'female');
+
+                if (staffGender === 'female' && hasMale) return false;
+                if (staffGender === 'male' && hasFemale) return false;
+              }
+
+              return true;
+            };
+
+            // 優先尋找符合性別相容性的區域
+            for (let i = 0; i < validTargets.length; i++) {
+              const t = validTargets[(assignIdx + i) % validTargets.length];
+              if (checkCompatibility(t, s.gender)) {
+                foundTarget = t;
+                assignIdx = assignIdx + i + 1;
+                break;
+              }
+            }
+
+            // 絕對防呆：若目前 validTargets 皆不符合性別規則，則尋找無性別限制的區域強制放入
+            if (!foundTarget) {
+              const safeArea = allAreas.find(ar => ar.genderRestriction === 'none') || allAreas[0];
+              let safeAssignment = assignments.find(a => a.areaId === safeArea.id);
+              if (!safeAssignment) {
+                safeAssignment = { areaId: safeArea.id, staffIds: [] };
+                assignments.push(safeAssignment);
+              }
+              foundTarget = safeAssignment;
+            }
+
+            foundTarget.staffIds.push(staffId);
+          }
+        }
+
+        const areaOrderMap = {};
+        allAreas.forEach(a => areaOrderMap[a.id] = a.order);
+        assignments.sort((a, b) => (areaOrderMap[a.areaId] || 99) - (areaOrderMap[b.areaId] || 99));
+
+        return { assignments, skippedAreas, warnings };
+      },
+
+      _assignArea(area, availablePool, staffMap, assignCounts, recentAreas, rng, forceMax) {
+        const poolArr = [...availablePool];
+        let eligible = poolArr.filter(id => {
+          const s = staffMap[id];
+          if (!s) return false;
+          if (s.floorRestriction && area.floor !== 0 && s.floorRestriction !== area.floor) return false;
+          if (s.excludeAreas && s.excludeAreas.includes(area.id)) return false;
+          return true;
+        });
+
+        if (area.genderRestriction === 'female') {
+          eligible = eligible.filter(id => staffMap[id]?.gender === 'female');
+        } else if (area.genderRestriction === 'malePreferred') {
+          const males = eligible.filter(id => staffMap[id]?.gender === 'male');
+          if (males.length > 0) eligible = males;
+        }
+
+        if (eligible.length === 0) return { staffIds: [] };
+
+        // 確定性排序
+        const scored = eligible.map(id => ({
+          id,
+          randomFactor: rng.next(),
+          recent: recentAreas[id]?.has(area.id) ? 1 : 0,
+          count: assignCounts[id] || 0
+        }));
+
+        scored.sort((a, b) => {
+          if (a.recent !== b.recent) return a.recent - b.recent;
+          if (a.count !== b.count) return a.count - b.count;
+          return a.randomFactor - b.randomFactor;
+        });
+
+        const num = this._decideHeadcount(area, scored.length, availablePool.size, forceMax);
+        return { staffIds: scored.slice(0, num).map(c => c.id) };
+      },
+
+      _decideHeadcount(area, candidateCount, totalAvailable, forceMax) {
+        const { minPeople, maxPeople } = area;
+        if (forceMax) return Math.min(forceMax, candidateCount);
+        if (candidateCount <= minPeople) return Math.min(candidateCount, minPeople);
+
+        // 依總人數調整分配量
+        if (totalAvailable >= 20) return Math.min(maxPeople, candidateCount);
+
+        // 如果是重要區域或可選區域已啟用，即便總人數不多也至少給予 minPeople
+        return Math.min(minPeople, candidateCount);
+      },
+    };
+  </script>
+  <script>// program/planner.js — 負責人輪值與代理機制
+
+    const PlannerService = {
+      /**
+       * 取得本週負責人（含代理判斷）
+       */
+      getTodayPlanner(presentStaffIds) {
+        const result = PlannerModel.getCurrentPlanner(presentStaffIds);
+        if (!result) return null;
+
+        const planner = StaffModel.getById(result.id);
+        const original = StaffModel.getById(result.originalId);
+
+        return {
+          id: result.id,
+          name: planner ? planner.name : '未知',
+          isDeputy: result.isDeputy,
+          originalId: result.originalId,
+          originalName: original ? original.name : '未知',
+        };
+      },
+
+      advanceToNextWeek() {
+        PlannerModel.advanceWeek();
+      },
+
+      getRotationOverview() {
+        const rot = PlannerModel.get();
+        return rot.planners.map((pid, idx) => {
+          const staff = StaffModel.getById(pid);
+          // 代理人 = 下一位
+          const nextIdx = (idx + 1) % rot.planners.length;
+          const deputy = StaffModel.getById(rot.planners[nextIdx]);
+
+          return {
+            index: idx,
+            isCurrent: idx === rot.currentIndex % rot.planners.length,
+            staffId: pid,
+            staffName: staff ? staff.name : '未知',
+            deputyName: deputy ? deputy.name : '無',
+          };
+        });
+      },
+
+      updateRotation(plannerIds) {
+        const rot = PlannerModel.get();
+        rot.planners = plannerIds;
+        if (rot.currentIndex >= plannerIds.length) rot.currentIndex = 0;
+        PlannerModel.save(rot);
+      },
+
+      setCurrentIndex(index) {
+        const rot = PlannerModel.get();
+        rot.currentIndex = index;
+        PlannerModel.save(rot);
+      },
+    };
+  </script>
+  <script>// program/data-io.js — JSON 匯出/匯入功能
+
+    const DataIO = {
+      exportAll() {
+        const data = {
+          version: 2,
+          exportedAt: new Date().toISOString(),
+          staff: StaffModel.getAll(),
+          areas: AreaModel.getAll(),
+          plannerRotation: PlannerModel.get(),
+          schedules: ScheduleModel.getAll(),
+        };
+
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'cleaning_backup_' + new Date().toISOString().slice(0, 10) + '.json';
+        a.click();
+        URL.revokeObjectURL(url);
+      },
+
+      importAll(file) {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            try {
+              const data = JSON.parse(e.target.result);
+              if (!data.staff || !data.areas) {
+                reject(new Error('檔案格式不正確'));
+                return;
+              }
+              if (data.staff) StaffModel.save(data.staff);
+              if (data.areas) AreaModel.save(data.areas);
+              if (data.plannerRotation) PlannerModel.save(data.plannerRotation);
+              if (data.schedules) saveData(STORAGE_KEYS.SCHEDULES, data.schedules);
+
+              // 匯入後自動更新版本號，防止 initializeDefaultData 誤刪
+              localStorage.setItem(STORAGE_KEYS.DATA_VER, String(DATA_VERSION));
+
+              resolve({
+                staffCount: data.staff?.length || 0,
+                areaCount: data.areas?.length || 0,
+                scheduleCount: data.schedules?.length || 0,
+              });
+            } catch (err) {
+              reject(new Error('JSON 解析失敗: ' + err.message));
+            }
+          };
+          reader.onerror = () => reject(new Error('檔案讀取失敗'));
+          reader.readAsText(file);
+        });
+      },
+
+      clearAll() {
+        Object.values(STORAGE_KEYS).forEach(key => localStorage.removeItem(key));
+      },
+    };
+  </script>
+  <script>// program/app.js — UI 控制器
+
+    // ─── 排班狀態管理 ───
+    let currentScheduleState = null;
+    let sessionPresentStaffIds = null;  // 暫存目前的勾選人員
+    let sessionOptionalAreaIds = null;  // 暫存目前的區域勾選
+
+    // ─── Toast ───
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      toast.className = 'toast ' + type;
+      toast.textContent = message;
+      container.appendChild(toast);
+      setTimeout(() => toast.remove(), 3000);
+    }
+
+    // ─── Modal ───
+    function openModal(html) {
+      const overlay = document.getElementById('modalOverlay');
+      document.getElementById('modalContent').innerHTML = html;
+      overlay.classList.add('active');
+    }
+
+    function closeModal() {
+      document.getElementById('modalOverlay').classList.remove('active');
+    }
+
+    document.getElementById('modalOverlay').addEventListener('click', (e) => {
+      if (e.target === e.currentTarget) closeModal();
+    });
+
+    // ─── Tab 切換 ───
+    document.getElementById('tabNav').addEventListener('click', (e) => {
+      const btn = e.target.closest('.tab-btn');
+      if (!btn) return;
+      const tab = btn.dataset.tab;
+
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('panel-' + tab).classList.add('active');
+
+      if (tab === 'staff') renderStaffTable();
+      if (tab === 'areas') renderAreaTable();
+      if (tab === 'rotation') renderRotation();
+      if (tab === 'history') renderHistory();
+      if (tab === 'schedule') refreshSchedulePanel();
+    });
+
+    // ═══════════════════════════════════════
+    // TAB 1: 每日排班
+    // ═══════════════════════════════════════
+
+    function refreshSchedulePanel() {
+      renderStaffCheckboxes();
+      renderOptionalToggles();
+      updatePlannerBanner();
+      updatePresentCount();
+    }
+
+    const dateInput = document.getElementById('scheduleDate');
+    dateInput.value = new Date().toISOString().slice(0, 10);
+
+    document.getElementById('todayBtn').addEventListener('click', () => {
+      dateInput.value = new Date().toISOString().slice(0, 10);
+      currentScheduleState = null;
+      checkExistingSchedule();
+    });
+
+    dateInput.addEventListener('change', () => {
+      currentScheduleState = null;
+      sessionPresentStaffIds = null;  // 重置，讓 refresh 時重新偵測該日期的紀錄或預設值
+      sessionOptionalAreaIds = null;
+      refreshSchedulePanel();
+      checkExistingSchedule();
+    });
+
+    function checkExistingSchedule() {
+      const existing = ScheduleModel.getByDate(dateInput.value);
+      if (existing) {
+        // 優先更新 Session 狀態
+        sessionPresentStaffIds = existing.presentStaff || [];
+        sessionOptionalAreaIds = existing.enabledOptionalAreas || []; // 假設舊資料無此欄位則為空
+
+        renderStaffCheckboxes();
+        renderOptionalToggles();
+        updatePresentCount();
+        renderScheduleResult(existing.assignments, existing.skippedAreas || [], []);
+
+        // 更新結果快取
+        currentScheduleState = {
+          assignments: existing.assignments,
+          skippedAreas: existing.skippedAreas,
+          presentIds: [...sessionPresentStaffIds],
+          plannerId: existing.planner,
+          enabledOptionalAreas: [...sessionOptionalAreaIds],
+          isHolidayTomorrow: false // 無法從歷史還原此項，預設 false
+        };
+
+        document.getElementById('saveScheduleBtn').style.display = '';
+        document.getElementById('printBtn').style.display = '';
+        document.getElementById('addLateBtn').style.display = '';
+
+        showToast('已載入 ' + dateInput.value + ' 的排班紀錄', 'info');
+      } else {
+        // 若無紀錄，則交由 refreshSchedulePanel (因 date 變動會觸發 refresh) 處理初始化
+        renderScheduleResult([], [], []);
+        document.getElementById('saveScheduleBtn').style.display = 'none';
+        document.getElementById('printBtn').style.display = 'none';
+        document.getElementById('addLateBtn').style.display = 'none';
+      }
+    }
+
+    // 人員勾選清單 (依部門分組)
+    function renderStaffCheckboxes() {
+      const container = document.getElementById('staffCheckboxes');
+      const staff = StaffModel.getActive();
+
+      const departments = {};
+      // 這裡不再需要內部的 sortOrder，改用下方的全域定義
+
+      staff.forEach(s => {
+        const dept = s.department || '未分類';
+        if (!departments[dept]) departments[dept] = [];
+        departments[dept].push(s);
+      });
+
+      // 處理初始化
+      if (sessionPresentStaffIds === null) {
+        const existing = ScheduleModel.getByDate(dateInput.value);
+        if (existing) {
+          sessionPresentStaffIds = existing.presentStaff || [];
+        } else {
+          sessionPresentStaffIds = staff.filter(s => s.isDefault).map(s => s.id);
+        }
+      }
+
+      let html = '';
+      // 調整部門順序：管理部 -> 營業部 -> 新事業部 -> 技術部
+      const sortOrder = ['管理部', '營業部', '新事業部', '技術部', '其他', '未分類'];
+
+      // 自定義人員順序 (部長除外)
+      const USER_SEQUENCE = ["s11", "s07", "s08", "s14", "s18", "s22", "s10", "s13", "s19", "s21", "s27", "s23", "s28", "s06", "s05", "s02", "s04", "s12", "s15", "s16", "s17", "s20", "s24", "s25", "s26"];
+
+      const getStaffRank = (s) => {
+        if (s.role === 'manager') return -1; // 部長永遠最前
+        const idx = USER_SEQUENCE.indexOf(s.id);
+        return idx === -1 ? 999 : idx;
+      };
+
+      const deptKeys = Object.keys(departments).sort((a, b) => {
+        const idxA = sortOrder.indexOf(a);
+        const idxB = sortOrder.indexOf(b);
+        return (idxA === -1 ? 99 : idxA) - (idxB === -1 ? 99 : idxB);
+      });
+
+      deptKeys.forEach(dept => {
+        // 部門內人員依自定義 Rank 排序
+        departments[dept].sort((a, b) => getStaffRank(a) - getStaffRank(b));
+
+        html += '<div class="dept-group" style="width:100%; margin-bottom:12px;">';
+        html += '<h4 style="font-size:0.85rem; color:var(--text-muted); border-bottom:1px solid var(--border); margin-bottom:8px; padding-bottom:4px;">' + dept + '</h4>';
+        html += '<div class="checkbox-grid">';
+
+        html += departments[dept].map(s => {
+          const isSelected = sessionPresentStaffIds.includes(s.id);
+          const roleTag = s.role === 'manager' ? '<span class="badge badge-warning" style="margin-left:4px;font-size:0.65rem;">部長</span>' : '';
+          const restrictTag = s.floorRestriction ? '<span class="badge badge-info" style="margin-left:4px;font-size:0.65rem;">限' + s.floorRestriction + 'F</span>' : '';
+
+          return '<label class="checkbox-item ' + (isSelected ? 'checked' : '') + '" data-id="' + s.id + '">' +
+            '<input type="checkbox" ' + (isSelected ? 'checked' : '') + '>' +
+            '<span class="checkbox-mark"></span>' +
+            '<span class="checkbox-label">' + s.name + roleTag + restrictTag + '</span>' +
+            '<span class="gender-badge ' + s.gender + '">' + (s.gender === 'male' ? '♂' : '♀') + '</span>' +
+            '</label>';
+        }).join('');
+
+        html += '</div></div>';
+      });
+
+      container.innerHTML = html;
+
+      container.querySelectorAll('.checkbox-item').forEach(item => {
+        item.addEventListener('click', (e) => {
+          e.preventDefault();
+          item.classList.toggle('checked');
+          const cb = item.querySelector('input');
+          cb.checked = !cb.checked;
+
+          // 同步至 Session
+          sessionPresentStaffIds = getSelectedStaffIds();
+
+          updatePresentCount();
+          updatePlannerBanner();
+        });
+      });
+    }
+
+    function getSelectedStaffIds() {
+      return [...document.querySelectorAll('#staffCheckboxes .checkbox-item.checked')].map(el => el.dataset.id);
+    }
+
+    function updatePresentCount() {
+      const selected = getSelectedStaffIds();
+      const allStaff = StaffModel.getAll();
+      const staffMap = {};
+      allStaff.forEach(s => staffMap[s.id] = s);
+
+      const males = selected.filter(id => staffMap[id]?.gender === 'male');
+      const females = selected.filter(id => staffMap[id]?.gender === 'female');
+
+      document.getElementById('presentCount').textContent = selected.length;
+      document.getElementById('maleCount').textContent = males.length;
+      document.getElementById('femaleCount').textContent = females.length;
+    }
+
+    document.getElementById('selectAllStaff').addEventListener('click', () => {
+      document.querySelectorAll('#staffCheckboxes .checkbox-item').forEach(item => {
+        item.classList.add('checked');
+        item.querySelector('input').checked = true;
+      });
+      sessionPresentStaffIds = getSelectedStaffIds();
+      updatePresentCount();
+      updatePlannerBanner();
+    });
+
+    document.getElementById('deselectAllStaff').addEventListener('click', () => {
+      document.querySelectorAll('#staffCheckboxes .checkbox-item').forEach(item => {
+        item.classList.remove('checked');
+        item.querySelector('input').checked = false;
+      });
+      sessionPresentStaffIds = [];
+      updatePresentCount();
+      updatePlannerBanner();
+    });
+
+    document.getElementById('selectDefaultStaff').addEventListener('click', () => {
+      const allStaff = StaffModel.getAll();
+      const staffMap = {};
+      allStaff.forEach(s => staffMap[s.id] = s);
+
+      document.querySelectorAll('#staffCheckboxes .checkbox-item').forEach(item => {
+        const id = item.dataset.id;
+        const s = staffMap[id];
+        if (s && s.isDefault) {
+          item.classList.add('checked');
+          item.querySelector('input').checked = true;
+        } else {
+          item.classList.remove('checked');
+          item.querySelector('input').checked = false;
+        }
+      });
+      sessionPresentStaffIds = getSelectedStaffIds();
+      updatePresentCount();
+      updatePlannerBanner();
+    });
+
+    function updatePlannerBanner() {
+      const presentIds = getSelectedStaffIds();
+      const planner = PlannerService.getTodayPlanner(presentIds.length > 0 ? presentIds : null);
+
+      const nameEl = document.getElementById('plannerName');
+      const noteEl = document.getElementById('deputyNote');
+
+      if (planner) {
+        nameEl.textContent = planner.name;
+        if (planner.isDeputy) {
+          noteEl.style.display = 'block';
+          noteEl.textContent = '（代理 ' + planner.originalName + '，負責人今日未出勤）';
+        } else {
+          noteEl.style.display = 'none';
+        }
+      } else {
+        nameEl.textContent = '尚未設定';
+        noteEl.style.display = 'none';
+      }
+    }
+
+    document.getElementById('generateBtn').addEventListener('click', () => {
+      const presentIds = getSelectedStaffIds();
+      if (presentIds.length === 0) {
+        showToast('請先勾選今日出勤人員', 'error');
+        return;
+      }
+
+      const isHolidayTomorrow = document.getElementById('holidayToggle').checked;
+      const enabledOptionalAreas = [];
+      document.querySelectorAll('.optional-area-toggle:checked').forEach(cb => {
+        enabledOptionalAreas.push(cb.dataset.areaId);
+      });
+
+      const planner = PlannerService.getTodayPlanner(presentIds);
+      const plannerId = planner ? planner.id : null;
+
+      const result = Scheduler.generate(presentIds, dateInput.value, {
+        isHolidayTomorrow,
+        enabledOptionalAreas,
+        plannerId,
+      });
+
+      currentScheduleState = {
+        assignments: result.assignments,
+        skippedAreas: result.skippedAreas,
+        warnings: result.warnings,
+        presentIds: [...presentIds],
+        plannerId,
+        isHolidayTomorrow,
+        enabledOptionalAreas,
+      };
+
+      renderScheduleResult(result.assignments, result.skippedAreas, result.warnings);
+      document.getElementById('saveScheduleBtn').style.display = '';
+      document.getElementById('printBtn').style.display = '';
+      document.getElementById('addLateBtn').style.display = '';
+
+      showToast('排班完成！已分配 ' + result.assignments.length + ' 個區域', 'success');
+    });
+
+    document.getElementById('addLateBtn').addEventListener('click', () => {
+      if (!currentScheduleState) {
+        showToast('請先進行自動排班', 'error');
+        return;
+      }
+
+      const nowSelectedIds = getSelectedStaffIds();
+      const prevIds = currentScheduleState.presentIds;
+      const newIds = nowSelectedIds.filter(id => !prevIds.includes(id) && id !== currentScheduleState.plannerId);
+
+      if (newIds.length === 0) {
+        showToast('沒有新增人員', 'info');
+        return;
+      }
+
+      const lockedAssignments = [];
+      const lockedStaffIds = [];
+      for (const assign of currentScheduleState.assignments) {
+        lockedAssignments.push(assign);
+        lockedStaffIds.push(...assign.staffIds);
+      }
+
+      const allPresentIds = [...new Set([...prevIds, ...newIds])];
+      const result = Scheduler.generate(allPresentIds, dateInput.value, {
+        isHolidayTomorrow: currentScheduleState.isHolidayTomorrow,
+        enabledOptionalAreas: currentScheduleState.enabledOptionalAreas,
+        plannerId: currentScheduleState.plannerId,
+        lockedAssignments,
+        lockedStaffIds,
+      });
+
+      currentScheduleState.assignments = result.assignments;
+      currentScheduleState.skippedAreas = result.skippedAreas;
+      currentScheduleState.presentIds = allPresentIds;
+
+      renderScheduleResult(result.assignments, result.skippedAreas, result.warnings);
+      showToast('已追加人員並更新分配', 'success');
+    });
+
+    function renderScheduleResult(assignments, skippedAreas, warnings) {
+      const container = document.getElementById('scheduleResult');
+      const allStaff = StaffModel.getAll();
+      const allAreas = AreaModel.getAll();
+      const staffMap = {};
+      allStaff.forEach(s => staffMap[s.id] = s);
+      const areaMap = {};
+      allAreas.forEach(a => areaMap[a.id] = a);
+
+      const dateStr = dateInput.value;
+      const dateObj = new Date(dateStr + 'T00:00:00');
+      const weekdays = ['日', '一', '二', '三', '四', '五', '六'];
+      const presentIds = getSelectedStaffIds();
+      const planner = PlannerService.getTodayPlanner(presentIds);
+
+      let html = '<div style="margin-bottom:16px;">' +
+        '<h3 style="font-size:1.1rem;font-weight:700;">📅 ' + dateStr + '（週' + weekdays[dateObj.getDay()] + '）排班結果</h3>';
+
+      if (planner) {
+        html += '<p style="font-size:0.85rem;color:var(--text-secondary);margin-top:4px;">排班負責人：<strong style="color:var(--accent);">' + planner.name + '</strong>（不參與掃地）';
+        if (planner.isDeputy) html += ' <span style="color:var(--warning);">— 代理 ' + planner.originalName + '</span>';
+        html += '</p>';
+      }
+      html += '</div>';
+
+      if (warnings && warnings.length > 0) {
+        html += warnings.map(w => '<div class="warning-item">' + w + '</div>').join('');
+      }
+
+      if (assignments.length > 0) {
+        html += assignments.map(a => {
+          const area = areaMap[a.areaId];
+          if (!area) return '';
+          const staffChips = a.staffIds.map(sid => {
+            const s = staffMap[sid];
+            if (!s) return '';
+            // 加入拖曳屬性與點擊移除事件
+            return `<span class="staff-chip ${s.gender}" draggable="true" ondragstart="handleDragStart(event, '${sid}', '${a.areaId}')" ondragend="handleDragEnd(event)" onclick="handleRemoveStaff(event, '${sid}', '${a.areaId}')" title="點擊移除該人員">\n              ${s.name}\n            </span>`;
+          }).join('');
+
+          const priorityClass = area.priority;
+          const genderTag = area.genderRestriction !== 'none'
+            ? '<span class="gender-badge ' + (area.genderRestriction === 'female' ? 'female' : 'male') + '" style="font-size:0.65rem;margin-left:4px;">' + (area.genderRestriction === 'female' ? '♀' : '♂優先') + '</span>'
+            : '';
+
+          const isOverflow = a.staffIds.length > area.maxPeople;
+          const overflowTag = isOverflow ? '<span style="font-size:0.7rem;color:var(--info);margin-left:6px;">(增援)</span>' : '';
+
+          // 區域加入接收拖曳的事件
+          return `<div class="assignment-card" data-area-id="${a.areaId}" ondragover="handleDragOver(event)" ondragenter="handleDragEnter(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event, '${a.areaId}')">` +
+            `<div class="assignment-area">` +
+            `<span class="priority-dot ${priorityClass}"></span>` +
+            area.name + genderTag + overflowTag +
+            `</div>` +
+            `<div class="assignment-staff">${staffChips}</div>` +
+            `</div>`;
+        }).join('');
+      } else {
+        html += '<div class="empty-state">⚠️ 尚無任何分配結果</div>';
+      }
+
+      if (skippedAreas && skippedAreas.length > 0) {
+        const relevantSkipped = skippedAreas.filter(aId => {
+          const area = areaMap[aId];
+          return area && area.priority !== 'optional';
+        });
+        const optionalSkipped = skippedAreas.filter(aId => {
+          const area = areaMap[aId];
+          return area && area.priority === 'optional';
+        });
+
+        if (relevantSkipped.length > 0) {
+          html += '<div style="margin-top:16px;"><h4 style="font-size:0.9rem;color:var(--text-muted);margin-bottom:8px;">⏭️ 今日跳過（人數不足）</h4></div>';
+          html += relevantSkipped.map(aId => {
+            const area = areaMap[aId];
+            return '<div class="skipped-area">⏭️ ' + (area ? area.name : aId) + '</div>';
+          }).join('');
+        }
+
+        if (optionalSkipped.length > 0) {
+          html += '<div style="margin-top:12px;"><h4 style="font-size:0.9rem;color:var(--text-muted);margin-bottom:8px;">🔘 未啟用的可選區域</h4></div>';
+          html += optionalSkipped.map(aId => {
+            const area = areaMap[aId];
+            return '<div class="skipped-area" style="border-color:rgba(96,165,250,0.15);background:var(--info-bg);color:var(--info);">🔘 ' + (area ? area.name : aId) + '</div>';
+          }).join('');
+        }
+      }
+
+      container.innerHTML = html;
+    }
+
+    document.getElementById('saveScheduleBtn').addEventListener('click', () => {
+      const dateStr = dateInput.value;
+      const presentIds = getSelectedStaffIds();
+      const isHolidayTomorrow = document.getElementById('holidayToggle').checked;
+      const enabledOptionalAreas = [];
+      document.querySelectorAll('.optional-area-toggle:checked').forEach(cb => enabledOptionalAreas.push(cb.dataset.areaId));
+      const planner = PlannerService.getTodayPlanner(presentIds);
+      const plannerId = planner ? planner.id : null;
+      const assignments = currentScheduleState ? currentScheduleState.assignments : Scheduler.generate(presentIds, dateStr, { isHolidayTomorrow, enabledOptionalAreas, plannerId }).assignments;
+
+      ScheduleModel.save({
+        date: dateStr,
+        planner: plannerId,
+        presentStaff: presentIds,
+        enabledOptionalAreas: enabledOptionalAreas, // 新增：保存已啟用的可選區域
+        assignments: assignments,
+        skippedAreas: currentScheduleState ? currentScheduleState.skippedAreas : [],
+      });
+      showToast(dateStr + ' 排班已儲存', 'success');
+    });
+
+    document.getElementById('printBtn').addEventListener('click', () => window.print());
+
+    const DEFAULT_CHECKED_AREAS = ['a10', 'a12'];
+
+    function renderOptionalToggles() {
+      const areas = AreaModel.getAll().filter(a => a.priority === 'optional');
+      const container = document.getElementById('optionalToggles');
+
+      // 初始化可選區域勾選狀態
+      if (sessionOptionalAreaIds === null) {
+        const existing = ScheduleModel.getByDate(dateInput.value);
+        if (existing && existing.enabledOptionalAreas) {
+          sessionOptionalAreaIds = existing.enabledOptionalAreas;
+        } else {
+          sessionOptionalAreaIds = [...DEFAULT_CHECKED_AREAS];
+        }
+      }
+
+      if (areas.length === 0) {
+        container.innerHTML = '';
+        return;
+      }
+      container.innerHTML = areas.map(a => {
+        const isChecked = sessionOptionalAreaIds.includes(a.id);
+        return '<label class="checkbox-item ' + (isChecked ? 'checked' : '') + '" style="max-width:220px;">' +
+          '<input type="checkbox" class="optional-area-toggle" data-area-id="' + a.id + '" ' + (isChecked ? 'checked' : '') + '>' +
+          '<span class="checkbox-mark"></span>' +
+          '<span class="checkbox-label">' + a.name + '</span>' +
+          '</label>';
+      }).join('');
+
+      container.querySelectorAll('.checkbox-item').forEach(item => {
+        item.addEventListener('click', (e) => {
+          e.preventDefault();
+          item.classList.toggle('checked');
+          const cb = item.querySelector('input');
+          cb.checked = !cb.checked;
+
+          // 同步至 Session
+          sessionOptionalAreaIds = [...document.querySelectorAll('.optional-area-toggle:checked')].map(el => el.dataset.areaId);
+        });
+      });
+    }
+
+    // ═══════════════════════════════════════
+    // TAB 2: 人員管理
+    // ═══════════════════════════════════════
+
+    // ─── Drag and Drop 邏輯 ───
+    let dragSrcStaffId = null;
+    let dragSrcAreaId = null;
+
+    window.handleDragStart = function (e, staffId, areaId) {
+      dragSrcStaffId = staffId;
+      dragSrcAreaId = areaId;
+      e.target.classList.add('dragging');
+      // 將被拖曳的資料放入 dataTransfer (非必要，但標準做法)
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', staffId);
+    };
+
+    window.handleDragEnd = function (e) {
+      e.target.classList.remove('dragging');
+      document.querySelectorAll('.assignment-card.drag-over').forEach(el => el.classList.remove('drag-over'));
+    };
+
+    window.handleDragOver = function (e) {
+      e.preventDefault(); // 必須阻擋預設行為才能觸發 drop
+      e.dataTransfer.dropEffect = 'move';
+    };
+
+    window.handleDragEnter = function (e) {
+      e.preventDefault();
+      const card = e.target.closest('.assignment-card');
+      if (card) {
+        card.classList.add('drag-over');
+      }
+    };
+
+    window.handleDragLeave = function (e) {
+      const card = e.target.closest('.assignment-card');
+      if (card) {
+        // 簡單判斷避免子元素閃爍
+        if (!card.contains(e.relatedTarget)) {
+          card.classList.remove('drag-over');
+        }
+      }
+    };
+
+    window.handleDrop = function (e, targetAreaId) {
+      e.preventDefault();
+      const card = e.target.closest('.assignment-card');
+      if (card) card.classList.remove('drag-over');
+
+      if (!dragSrcStaffId || !dragSrcAreaId) return;
+      if (dragSrcAreaId === targetAreaId) return; // 原地放下不處理
+
+      if (!currentScheduleState || !currentScheduleState.assignments) {
+        showToast('找不到排班資料', 'error');
+        return;
+      }
+
+      // 尋找來源與目標 Assignment
+      const assignments = currentScheduleState.assignments;
+      let srcAssignment = assignments.find(a => a.areaId === dragSrcAreaId);
+      let dstAssignment = assignments.find(a => a.areaId === targetAreaId);
+
+      // 極端防呆 (不應該發生)
+      if (!srcAssignment) return;
+      if (!dstAssignment) {
+        // 目標可能目前沒人而不在 assignments 陣列中，將其加入
+        dstAssignment = { areaId: targetAreaId, staffIds: [] };
+        assignments.push(dstAssignment);
+      }
+
+      // 檢查性別相容性等 (雖然拖曳是手動覆蓋，但為了防止犯錯，也可做提示)
+      const staff = StaffModel.getById(dragSrcStaffId);
+      const targetArea = AreaModel.getById(targetAreaId);
+
+      if (targetArea && targetArea.genderRestriction === 'female' && staff.gender === 'male') {
+        showToast('⚠️ 錯誤：男同事不能掃女廁！', 'error');
+        return;
+      }
+
+      if (targetArea && targetArea.name.includes('廁') && dstAssignment.staffIds.length >= targetArea.maxPeople) {
+        if (!confirm('⚠️ 警告：該廁所已有 ' + dstAssignment.staffIds.length + ' 人 (上限 ' + targetArea.maxPeople + ' 人)，確定要放入嗎？')) {
+          return;
+        }
+      }
+
+      // 從來源移除
+      srcAssignment.staffIds = srcAssignment.staffIds.filter(id => id !== dragSrcStaffId);
+      // 加入目標
+      dstAssignment.staffIds.push(dragSrcStaffId);
+
+      // 如果來源區空了，保留該物件，不將它從 assignments 陣列中移除
+      // 如此一來空的區域還是會顯示在畫面上，方便使用者將其他人拖回該區
+
+      // 重繪畫面
+      renderScheduleResult(currentScheduleState.assignments, currentScheduleState.skippedAreas, currentScheduleState.warnings);
+      showToast('已將 ' + staff.name + ' 移至 ' + targetArea.name, 'success');
+
+      // 提示儲存
+      document.getElementById('saveScheduleBtn').classList.add('btn-primary');
+      document.getElementById('saveScheduleBtn').classList.remove('btn-success');
+      document.getElementById('saveScheduleBtn').innerHTML = '💾 記得儲存變更';
+
+      dragSrcStaffId = null;
+      dragSrcAreaId = null;
+    };
+
+    window.handleRemoveStaff = function (e, staffId, areaId) {
+      e.preventDefault();
+      e.stopPropagation();
+
+      if (!currentScheduleState || !currentScheduleState.assignments) return;
+      if (!confirm('確定要從排班中移除此人員嗎？')) return;
+
+      const assignment = currentScheduleState.assignments.find(a => a.areaId === areaId);
+      if (assignment) {
+        assignment.staffIds = assignment.staffIds.filter(id => id !== staffId);
+
+        // 同步取消今日出勤人員的勾選狀態
+        const cbItem = document.querySelector('#staffCheckboxes .checkbox-item[data-id="' + staffId + '"]');
+        if (cbItem) {
+          cbItem.classList.remove('checked');
+          const cbInput = cbItem.querySelector('input');
+          if (cbInput) cbInput.checked = false;
+
+          if (typeof getSelectedStaffIds === 'function') {
+            sessionPresentStaffIds = getSelectedStaffIds();
+          }
+          if (typeof updatePresentCount === 'function') updatePresentCount();
+          if (typeof updatePlannerBanner === 'function') updatePlannerBanner();
+        }
+
+        // 將 currentScheduleState 裡的 presentIds 同步移除該員，確保「追加人員」能正確認知此人已不在排班中
+        if (currentScheduleState && currentScheduleState.presentIds) {
+          currentScheduleState.presentIds = currentScheduleState.presentIds.filter(id => id !== staffId);
+        }
+
+        // 視覺回饋與重新渲染
+        const targetChip = e.target.closest('.staff-chip');
+        if (targetChip) {
+          targetChip.style.opacity = '0';
+          targetChip.style.transform = 'scale(0.8)';
+        }
+
+        setTimeout(() => {
+          renderScheduleResult(currentScheduleState.assignments, currentScheduleState.skippedAreas, currentScheduleState.warnings);
+          showToast('已移除排班人員，並取消其今日出勤', 'info');
+
+          document.getElementById('saveScheduleBtn').classList.add('btn-primary');
+          document.getElementById('saveScheduleBtn').classList.remove('btn-success');
+          document.getElementById('saveScheduleBtn').innerHTML = '💾 記得儲存變更';
+        }, 150);
+      }
+    };
+
+    function renderStaffTable() {
+      const staff = StaffModel.getAll();
+      const tbody = document.getElementById('staffTableBody');
+      if (staff.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" class="empty-state"><div class="empty-icon">👥</div><p>尚無人員</p></td></tr>';
+        return;
+      }
+
+      // 依部門與職稱排序
+      const sortOrder = ['管理部', '營業部', '新事業部', '技術部', '其他', '未分類'];
+      const USER_SEQUENCE = ["s11", "s07", "s08", "s14", "s18", "s22", "s10", "s13", "s19", "s21", "s27", "s23", "s28", "s06", "s05", "s02", "s04", "s12", "s15", "s16", "s17", "s20", "s24", "s25", "s26"];
+
+      const getRank = (s) => {
+        const dIdx = sortOrder.indexOf(s.department || '未分類');
+        const deptScore = (dIdx === -1 ? 99 : dIdx) * 1000;
+        const roleScore = s.role === 'manager' ? -100 : 0;
+        const seqIdx = USER_SEQUENCE.indexOf(s.id);
+        const seqScore = seqIdx === -1 ? 900 : seqIdx;
+        return deptScore + roleScore + seqScore;
+      };
+
+      const sortedStaff = [...staff].sort((a, b) => getRank(a) - getRank(b));
+
+      tbody.innerHTML = sortedStaff.map(s => {
+        const restrict = [];
+        if (s.floorRestriction) restrict.push('限' + s.floorRestriction + 'F');
+        if (s.excludeAreas && s.excludeAreas.length > 0) {
+          const areaNames = s.excludeAreas.map(aid => {
+            const a = AreaModel.getById(aid);
+            return a ? a.name : aid;
+          });
+          restrict.push('排除:' + areaNames.join(','));
+        }
+
+        return '<tr>' +
+          '<td>' + (s.department || '未分類') + '</td>' +
+          '<td><strong>' + s.name + '</strong>' + (restrict.length ? '<br><small style="color:var(--warning)">' + restrict.join(',') + '</small>' : '') + '</td>' +
+          '<td><span class="gender-badge ' + s.gender + '">' + (s.gender === 'male' ? '♂' : '♀') + '</span></td>' +
+          '<td>' + (s.role === 'manager' ? '<span class="badge badge-warning">部長</span>' : '一般') + '</td>' +
+          '<td>' + (s.active ? '在職' : '停用') + '</td>' +
+          '<td>' + (s.isDefault ? '是' : '否') + '</td>' +
+          '<td class="actions">' +
+          '<button class="btn-icon" onclick="editStaff(\'' + s.id + '\')">✏️</button>' +
+          '<button class="btn-icon danger" onclick="deleteStaff(\'' + s.id + '\')">🗑️</button>' +
+          '</td></tr>';
+      }).join('');
+    }
+
+    document.getElementById('addStaffBtn').addEventListener('click', () => {
+      const areasForExclude = AreaModel.getAll().map(a =>
+        '<option value="' + a.id + '">' + a.name + '</option>'
+      ).join('');
+
+      openModal(
+        '<div class="modal-header"><h3 class="modal-title">新增人員</h3><button class="modal-close" onclick="closeModal()">✕</button></div>' +
+        '<div class="form-group"><label>部門</label><select class="form-select" id="modalStaffDept"><option value="管理部">管理部</option><option value="營業部">營業部</option><option value="新事業部">新事業部</option><option value="技術部" selected>技術部</option></select></div>' +
+        '<div class="form-group"><label>姓名</label><input class="form-input" id="modalStaffName" placeholder="請輸入姓名" autofocus></div>' +
+        '<div class="form-row">' +
+        '<div class="form-group"><label>性別</label><select class="form-select" id="modalStaffGender"><option value="male">♂ 男</option><option value="female">♀ 女</option></select></div>' +
+        '<div class="form-group"><label>角色</label><select class="form-select" id="modalStaffRole"><option value="regular">一般</option><option value="manager">部長</option></select></div>' +
+        '</div>' +
+        '<div class="form-row">' +
+        '<div class="form-group"><label>預設每日出勤</label><select class="form-select" id="modalStaffDefault"><option value="true">是</option><option value="false">否</option></select></div>' +
+        '<div class="form-group"><label>樓層限制</label><select class="form-select" id="modalStaffFloor"><option value="">無限制</option><option value="1">僅 1 樓</option><option value="2">僅 2 樓</option></select></div>' +
+        '</div>' +
+        '<div class="form-group"><label>排除區域（可多選，按住 Ctrl）</label><select class="form-select" id="modalStaffExclude" multiple style="height:100px;">' + areasForExclude + '</select></div>' +
+        '<div class="modal-footer"><button class="btn btn-outline btn-sm" onclick="closeModal()">取消</button><button class="btn btn-primary btn-sm" onclick="saveNewStaff()">新增</button></div>'
+      );
+    });
+
+    window.saveNewStaff = function () {
+      const name = document.getElementById('modalStaffName').value.trim();
+      if (!name) { showToast('請輸入姓名', 'error'); return; }
+
+      const floorVal = document.getElementById('modalStaffFloor').value;
+      const excludeSel = document.getElementById('modalStaffExclude');
+      const excludeAreas = [...excludeSel.selectedOptions].map(o => o.value);
+
+      StaffModel.add({
+        name,
+        department: document.getElementById('modalStaffDept').value,
+        gender: document.getElementById('modalStaffGender').value,
+        role: document.getElementById('modalStaffRole').value,
+        isDefault: document.getElementById('modalStaffDefault').value === 'true',
+        floorRestriction: floorVal ? parseInt(floorVal) : null,
+        excludeAreas,
+      });
+
+      closeModal();
+      renderStaffTable();
+      showToast('已新增人員：' + name, 'success');
+    };
+
+    window.editStaff = function (id) {
+      const s = StaffModel.getById(id);
+      if (!s) return;
+
+      const areasForExclude = AreaModel.getAll().map(a =>
+        '<option value="' + a.id + '" ' + ((s.excludeAreas || []).includes(a.id) ? 'selected' : '') + '>' + a.name + '</option>'
+      ).join('');
+
+      const depts = ['管理部', '營業部', '新事業部', '技術部'];
+      const deptOptions = depts.map(d => '<option value="' + d + '" ' + (s.department === d ? 'selected' : '') + '>' + d + '</option>').join('');
+
+      openModal(
+        '<div class="modal-header"><h3 class="modal-title">編輯人員</h3><button class="modal-close" onclick="closeModal()">✕</button></div>' +
+        '<div class="form-group"><label>部門</label><select class="form-select" id="modalStaffDept">' + deptOptions + '</select></div>' +
+        '<div class="form-group"><label>姓名</label><input class="form-input" id="modalStaffName" value="' + s.name + '"></div>' +
+        '<div class="form-row">' +
+        '<div class="form-group"><label>性別</label><select class="form-select" id="modalStaffGender"><option value="male" ' + (s.gender === 'male' ? 'selected' : '') + '>♂ 男</option><option value="female" ' + (s.gender === 'female' ? 'selected' : '') + '>♀ 女</option></select></div>' +
+        '<div class="form-group"><label>角色</label><select class="form-select" id="modalStaffRole"><option value="regular" ' + (s.role !== 'manager' ? 'selected' : '') + '>一般</option><option value="manager" ' + (s.role === 'manager' ? 'selected' : '') + '>部長</option></select></div>' +
+        '</div>' +
+        '<div class="form-row">' +
+        '<div class="form-group"><label>狀態</label><select class="form-select" id="modalStaffActive"><option value="true" ' + (s.active ? 'selected' : '') + '>在職</option><option value="false" ' + (!s.active ? 'selected' : '') + '>停用</option></select></div>' +
+        '<div class="form-group"><label>預設每日出勤</label><select class="form-select" id="modalStaffDefault"><option value="true" ' + (s.isDefault ? 'selected' : '') + '>是</option><option value="false" ' + (!s.isDefault ? 'selected' : '') + '>否</option></select></div>' +
+        '</div>' +
+        '<div class="form-group"><label>樓層限制</label><select class="form-select" id="modalStaffFloor"><option value="">無限制</option><option value="1" ' + (s.floorRestriction === 1 ? 'selected' : '') + '>僅 1 樓</option><option value="2" ' + (s.floorRestriction === 2 ? 'selected' : '') + '>僅 2 樓</option></select></div>' +
+        '<div class="form-group"><label>排除區域（可多選，按住 Ctrl）</label><select class="form-select" id="modalStaffExclude" multiple style="height:100px;">' + areasForExclude + '</select></div>' +
+        '<div class="modal-footer"><button class="btn btn-outline btn-sm" onclick="closeModal()">取消</button><button class="btn btn-primary btn-sm" onclick="updateStaff(\'' + id + '\')">儲存</button></div>'
+      );
+    };
+
+    window.updateStaff = function (id) {
+      const floorVal = document.getElementById('modalStaffFloor').value;
+      const excludeSel = document.getElementById('modalStaffExclude');
+      const excludeAreas = [...excludeSel.selectedOptions].map(o => o.value);
+
+      StaffModel.update(id, {
+        name: document.getElementById('modalStaffName').value.trim(),
+        department: document.getElementById('modalStaffDept').value,
+        gender: document.getElementById('modalStaffGender').value,
+        role: document.getElementById('modalStaffRole').value,
+        active: document.getElementById('modalStaffActive').value === 'true',
+        isDefault: document.getElementById('modalStaffDefault').value === 'true',
+        floorRestriction: floorVal ? parseInt(floorVal) : null,
+        excludeAreas,
+      });
+      closeModal();
+      renderStaffTable();
+      if (document.querySelector('.tab-btn[data-tab="schedule"]').classList.contains('active')) {
+        renderStaffCheckboxes(); // 更新排班頁面的人員分組
+      }
+      showToast('人員已更新', 'success');
+    };
+
+    window.deleteStaff = function (id) {
+      const s = StaffModel.getById(id);
+      if (!s) return;
+      if (!confirm('確定刪除「' + s.name + '」嗎？')) return;
+      StaffModel.remove(id);
+      renderStaffTable();
+      showToast('已刪除：' + s.name, 'info');
+    };
+
+    // ═══════════════════════════════════════
+    // TAB 3: 區域管理
+    // ═══════════════════════════════════════
+
+    function renderAreaTable() {
+      const areas = AreaModel.getAll();
+      const tbody = document.getElementById('areaTableBody');
+
+      if (areas.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="empty-state"><div class="empty-icon">🏢</div><p>尚無區域</p></td></tr>';
+        return;
+      }
+
+      const priorityLabels = { daily: '🔴 每日必掃', flexible: '🟡 彈性', optional: '🔵 可選' };
+      const genderLabels = { none: '不限', female: '♀ 限女', malePreferred: '♂ 優先男', male: '♂ 限男' };
+
+      tbody.innerHTML = areas.map(a => {
+        return '<tr>' +
+          '<td><strong>' + a.name + '</strong></td>' +
+          '<td>' + (a.floor === 0 ? '全' : a.floor + 'F') + '</td>' +
+          '<td>' + (priorityLabels[a.priority] || a.priority) + '</td>' +
+          '<td>' + (genderLabels[a.genderRestriction] || a.genderRestriction) + '</td>' +
+          '<td>' + a.minPeople + '~' + a.maxPeople + ' 人' + (a.holidayBoost ? ' <span class="badge badge-info" style="font-size:0.6rem;">假日+1</span>' : '') + '</td>' +
+          '<td class="actions">' +
+          '<button class="btn-icon" onclick="editArea(\'' + a.id + '\')" title="編輯">✏️</button>' +
+          '<button class="btn-icon danger" onclick="deleteArea(\'' + a.id + '\')" title="刪除">🗑️</button>' +
+          '</td></tr>';
+      }).join('');
+    }
+
+    document.getElementById('addAreaBtn').addEventListener('click', () => {
+      openModal(
+        '<div class="modal-header"><h3 class="modal-title">新增清掃區域</h3><button class="modal-close" onclick="closeModal()">✕</button></div>' +
+        '<div class="form-group"><label>區域名稱</label><input class="form-input" id="modalAreaName" placeholder="例：2樓_會議室" autofocus></div>' +
+        '<div class="form-row-3">' +
+        '<div class="form-group"><label>樓層</label><select class="form-select" id="modalAreaFloor"><option value="0">全樓層</option><option value="1">1 樓</option><option value="2">2 樓</option></select></div>' +
+        '<div class="form-group"><label>優先級</label><select class="form-select" id="modalAreaPriority"><option value="daily">每日必掃</option><option value="flexible">彈性</option><option value="optional">可選</option></select></div>' +
+        '<div class="form-group"><label>性別限定</label><select class="form-select" id="modalAreaGender"><option value="none">不限</option><option value="malePreferred">♂ 優先男</option><option value="female">♀ 僅限女性</option></select></div>' +
+        '</div>' +
+        '<div class="form-row-3">' +
+        '<div class="form-group"><label>最少人數</label><input class="form-input" id="modalAreaMin" type="number" min="1" max="10" value="1"></div>' +
+        '<div class="form-group"><label>最多人數</label><input class="form-input" id="modalAreaMax" type="number" min="1" max="10" value="1"></div>' +
+        '<div class="form-group"><label>假日前加人</label><select class="form-select" id="modalAreaHoliday"><option value="false">否</option><option value="true">是</option></select></div>' +
+        '</div>' +
+        '<div class="modal-footer"><button class="btn btn-outline btn-sm" onclick="closeModal()">取消</button><button class="btn btn-primary btn-sm" onclick="saveNewArea()">新增</button></div>'
+      );
+    });
+
+    window.saveNewArea = function () {
+      const name = document.getElementById('modalAreaName').value.trim();
+      if (!name) { showToast('請輸入區域名稱', 'error'); return; }
+
+      AreaModel.add({
+        name,
+        floor: parseInt(document.getElementById('modalAreaFloor').value),
+        priority: document.getElementById('modalAreaPriority').value,
+        genderRestriction: document.getElementById('modalAreaGender').value,
+        minPeople: parseInt(document.getElementById('modalAreaMin').value) || 1,
+        maxPeople: parseInt(document.getElementById('modalAreaMax').value) || 1,
+        holidayBoost: document.getElementById('modalAreaHoliday').value === 'true',
+      });
+
+      closeModal();
+      renderAreaTable();
+      renderOptionalToggles();
+      showToast('已新增區域：' + name, 'success');
+    };
+
+    window.editArea = function (id) {
+      const a = AreaModel.getById(id);
+      if (!a) return;
+
+      openModal(
+        '<div class="modal-header"><h3 class="modal-title">編輯區域</h3><button class="modal-close" onclick="closeModal()">✕</button></div>' +
+        '<div class="form-group"><label>區域名稱</label><input class="form-input" id="modalAreaName" value="' + a.name + '"></div>' +
+        '<div class="form-row-3">' +
+        '<div class="form-group"><label>樓層</label><select class="form-select" id="modalAreaFloor"><option value="0" ' + (a.floor === 0 ? 'selected' : '') + '>全樓層</option><option value="1" ' + (a.floor === 1 ? 'selected' : '') + '>1 樓</option><option value="2" ' + (a.floor === 2 ? 'selected' : '') + '>2 樓</option></select></div>' +
+        '<div class="form-group"><label>優先級</label><select class="form-select" id="modalAreaPriority"><option value="daily" ' + (a.priority === 'daily' ? 'selected' : '') + '>每日必掃</option><option value="flexible" ' + (a.priority === 'flexible' ? 'selected' : '') + '>彈性</option><option value="optional" ' + (a.priority === 'optional' ? 'selected' : '') + '>可選</option></select></div>' +
+        '<div class="form-group"><label>性別限定</label><select class="form-select" id="modalAreaGender"><option value="none" ' + (a.genderRestriction === 'none' ? 'selected' : '') + '>不限</option><option value="malePreferred" ' + (a.genderRestriction === 'malePreferred' ? 'selected' : '') + '>♂ 優先男</option><option value="female" ' + (a.genderRestriction === 'female' ? 'selected' : '') + '>♀ 僅限女性</option></select></div>' +
+        '</div>' +
+        '<div class="form-row-3">' +
+        '<div class="form-group"><label>最少人數</label><input class="form-input" id="modalAreaMin" type="number" min="1" max="10" value="' + a.minPeople + '"></div>' +
+        '<div class="form-group"><label>最多人數</label><input class="form-input" id="modalAreaMax" type="number" min="1" max="10" value="' + a.maxPeople + '"></div>' +
+        '<div class="form-group"><label>假日前加人</label><select class="form-select" id="modalAreaHoliday"><option value="false" ' + (!a.holidayBoost ? 'selected' : '') + '>否</option><option value="true" ' + (a.holidayBoost ? 'selected' : '') + '>是</option></select></div>' +
+        '</div>' +
+        '<div class="modal-footer"><button class="btn btn-outline btn-sm" onclick="closeModal()">取消</button><button class="btn btn-primary btn-sm" onclick="updateArea(\'' + id + '\')">儲存</button></div>'
+      );
+    };
+
+    window.updateArea = function (id) {
+      AreaModel.update(id, {
+        name: document.getElementById('modalAreaName').value.trim(),
+        floor: parseInt(document.getElementById('modalAreaFloor').value),
+        priority: document.getElementById('modalAreaPriority').value,
+        genderRestriction: document.getElementById('modalAreaGender').value,
+        minPeople: parseInt(document.getElementById('modalAreaMin').value) || 1,
+        maxPeople: parseInt(document.getElementById('modalAreaMax').value) || 1,
+        holidayBoost: document.getElementById('modalAreaHoliday').value === 'true',
+      });
+      closeModal();
+      renderAreaTable();
+      renderOptionalToggles();
+      showToast('區域已更新', 'success');
+    };
+
+    window.deleteArea = function (id) {
+      const a = AreaModel.getById(id);
+      if (!a) return;
+      if (!confirm('確定刪除「' + a.name + '」嗎？')) return;
+      AreaModel.remove(id);
+      renderAreaTable();
+      renderOptionalToggles();
+      showToast('已刪除：' + a.name, 'info');
+    };
+
+    // ═══════════════════════════════════════
+    // TAB 4 & 5 & 6 (Rotation, History, Data)
+    // ═══════════════════════════════════════
+
+    function renderRotation() {
+      const overview = PlannerService.getRotationOverview();
+      const container = document.getElementById('rotationList');
+
+      if (overview.length === 0) {
+        container.innerHTML = '<div class="empty-state"><div class="empty-icon">🔄</div><p>尚未設定輪值順序</p></div>';
+        return;
+      }
+
+      container.innerHTML = overview.map(item =>
+        '<div class="rotation-item ' + (item.isCurrent ? 'current' : '') + '" onclick="PlannerService.setCurrentIndex(' + item.index + ');renderRotation();updatePlannerBanner();showToast(\'已切換本週負責人為 ' + item.staffName + '\',\'success\');">' +
+        '<span class="rotation-index">' + (item.index + 1) + '</span>' +
+        '<span class="rotation-name">' + item.staffName + '</span>' +
+        (item.isCurrent ? '<span class="badge badge-success">本週</span>' : '') +
+        '<span class="rotation-deputy">代理人：' + item.deputyName + '</span>' +
+        '</div>'
+      ).join('');
+    }
+
+    document.getElementById('advanceWeekBtn').addEventListener('click', () => {
+      PlannerService.advanceToNextWeek();
+      renderRotation();
+      updatePlannerBanner();
+      showToast('已推進至下一週', 'success');
+    });
+
+    function renderHistory() {
+      const schedules = ScheduleModel.getRecent(30);
+      const container = document.getElementById('historyList');
+      const allStaff = StaffModel.getAll();
+      const staffMap = {};
+      allStaff.forEach(s => staffMap[s.id] = s);
+
+      if (schedules.length === 0) {
+        container.innerHTML = '<div class="empty-state"><div class="empty-icon">📜</div><p>尚無排班紀錄</p></div>';
+        return;
+      }
+
+      const weekdays = ['日', '一', '二', '三', '四', '五', '六'];
+
+      container.innerHTML = schedules.map(sched => {
+        const areaCount = sched.assignments ? sched.assignments.length : 0;
+        const staffCount = sched.presentStaff ? sched.presentStaff.length : 0;
+        const plannerName = sched.planner && staffMap[sched.planner] ? staffMap[sched.planner].name : '-';
+        const dateObj = new Date(sched.date + 'T00:00:00');
+
+        return '<div class="history-item" onclick="loadHistorySchedule(\'' + sched.date + '\')">' +
+          '<div>' +
+          '<div class="history-date">' + sched.date + '（週' + weekdays[dateObj.getDay()] + '）</div>' +
+          '<div class="history-summary">出勤 ' + staffCount + ' 人 · 排定 ' + areaCount + ' 區域 · 負責人：' + plannerName + '</div>' +
+          '</div>' +
+          '<button class="btn-icon danger" onclick="event.stopPropagation();deleteHistory(\'' + sched.date + '\')" title="刪除">🗑️</button>' +
+          '</div>';
+      }).join('');
+    }
+
+    window.loadHistorySchedule = function (dateStr) {
+      const sched = ScheduleModel.getByDate(dateStr);
+      if (!sched) return;
+
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      document.querySelector('[data-tab="schedule"]').classList.add('active');
+      document.getElementById('panel-schedule').classList.add('active');
+
+      dateInput.value = dateStr;
+      renderStaffCheckboxes();
+
+      setTimeout(() => {
+        document.querySelectorAll('#staffCheckboxes .checkbox-item').forEach(item => {
+          const id = item.dataset.id;
+          if (sched.presentStaff.includes(id)) {
+            item.classList.add('checked');
+            item.querySelector('input').checked = true;
+          } else {
+            item.classList.remove('checked');
+            item.querySelector('input').checked = false;
+          }
+        });
+        updatePresentCount();
+        updatePlannerBanner();
+        renderScheduleResult(sched.assignments, sched.skippedAreas || [], []);
+      }, 50);
+    };
+
+    window.deleteHistory = function (dateStr) {
+      if (!confirm('確定刪除 ' + dateStr + ' 的排班紀錄嗎？')) return;
+      ScheduleModel.remove(dateStr);
+      renderHistory();
+      showToast('已刪除 ' + dateStr + ' 的紀錄', 'info');
+    };
+
+    document.getElementById('exportBtn').addEventListener('click', () => {
+      DataIO.exportAll();
+      showToast('資料已匯出', 'success');
+    });
+
+    document.getElementById('importBtn').addEventListener('click', () => {
+      document.getElementById('importFile').click();
+    });
+
+    document.getElementById('importFile').addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      try {
+        const result = await DataIO.importAll(file);
+        showToast('匯入成功：' + result.staffCount + ' 人、' + result.areaCount + ' 區域、' + result.scheduleCount + ' 筆紀錄', 'success');
+        refreshSchedulePanel();
+        renderOptionalToggles();
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+      e.target.value = '';
+    });
+
+    document.getElementById('clearAllBtn').addEventListener('click', () => {
+      if (!confirm('⚠️ 確定清除全部資料嗎？此操作無法復原！')) return;
+      if (!confirm('再次確認：所有人員、區域、排班紀錄都將被刪除？')) return;
+      DataIO.clearAll();
+      showToast('所有資料已清除', 'info');
+      refreshSchedulePanel();
+      renderOptionalToggles();
+    });
+
+    document.getElementById('resetDefaultBtn').addEventListener('click', async () => {
+      if (!confirm('確定重置為預設資料嗎？現有資料將被覆蓋。')) return;
+      DataIO.clearAll();
+      localStorage.removeItem('cleaning_data_version');
+      initializeInlineData();
+      refreshSchedulePanel();
+      renderOptionalToggles();
+      showToast('已重置為預設資料', 'success');
+    });
+
+    document.getElementById('holidayLabel').addEventListener('click', (e) => {
+      e.preventDefault();
+      const item = document.getElementById('holidayLabel');
+      const cb = document.getElementById('holidayToggle');
+      cb.checked = !cb.checked;
+      item.classList.toggle('checked', cb.checked);
+    });
+
+    async function boot() {
+      await initializeDefaultData();
+      refreshSchedulePanel();
+      renderOptionalToggles();
+    }
+
+    boot();
+  </script>
+
+</body>
+
+</html>
