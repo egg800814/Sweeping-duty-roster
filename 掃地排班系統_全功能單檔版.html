@@ -501,10 +501,30 @@
 
     .staff-chip[draggable="true"] {
       cursor: grab;
+      position: relative;
+      padding-right: 24px;
     }
 
     .staff-chip[draggable="true"]:active {
       cursor: grabbing;
+    }
+
+    .staff-chip[draggable="true"]::after {
+      content: '×';
+      position: absolute;
+      right: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 1.1rem;
+      line-height: 1;
+      opacity: 0.5;
+      transition: opacity var(--transition);
+      cursor: pointer;
+    }
+
+    .staff-chip[draggable="true"]:hover::after {
+      opacity: 1;
+      color: var(--danger);
     }
 
     .staff-chip.dragging {
@@ -2899,8 +2919,8 @@
           const staffChips = a.staffIds.map(sid => {
             const s = staffMap[sid];
             if (!s) return '';
-            // 加入拖曳屬性
-            return `<span class="staff-chip ${s.gender}" draggable="true" ondragstart="handleDragStart(event, '${sid}', '${a.areaId}')" ondragend="handleDragEnd(event)">${s.name}</span>`;
+            // 加入拖曳屬性與點擊移除事件
+            return `<span class="staff-chip ${s.gender}" draggable="true" ondragstart="handleDragStart(event, '${sid}', '${a.areaId}')" ondragend="handleDragEnd(event)" onclick="handleRemoveStaff(event, '${sid}', '${a.areaId}')" title="點擊移除該人員">\n              ${s.name}\n            </span>`;
           }).join('');
 
           const priorityClass = area.priority;
@@ -3110,10 +3130,8 @@
       // 加入目標
       dstAssignment.staffIds.push(dragSrcStaffId);
 
-      // 如果來源區空了，可以視情況清理陣列
-      if (srcAssignment.staffIds.length === 0) {
-        currentScheduleState.assignments = assignments.filter(a => a.areaId !== dragSrcAreaId);
-      }
+      // 如果來源區空了，保留該物件，不將它從 assignments 陣列中移除
+      // 如此一來空的區域還是會顯示在畫面上，方便使用者將其他人拖回該區
 
       // 重繪畫面
       renderScheduleResult(currentScheduleState.assignments, currentScheduleState.skippedAreas, currentScheduleState.warnings);
@@ -3126,6 +3144,35 @@
 
       dragSrcStaffId = null;
       dragSrcAreaId = null;
+    };
+
+    window.handleRemoveStaff = function (e, staffId, areaId) {
+      e.preventDefault();
+      e.stopPropagation();
+
+      if (!currentScheduleState || !currentScheduleState.assignments) return;
+      if (!confirm('確定要從排班中移除此人員嗎？')) return;
+
+      const assignment = currentScheduleState.assignments.find(a => a.areaId === areaId);
+      if (assignment) {
+        assignment.staffIds = assignment.staffIds.filter(id => id !== staffId);
+
+        // 視覺回饋與重新渲染
+        const targetChip = e.target.closest('.staff-chip');
+        if (targetChip) {
+          targetChip.style.opacity = '0';
+          targetChip.style.transform = 'scale(0.8)';
+        }
+
+        setTimeout(() => {
+          renderScheduleResult(currentScheduleState.assignments, currentScheduleState.skippedAreas, currentScheduleState.warnings);
+          showToast('已移除排班人員', 'info');
+
+          document.getElementById('saveScheduleBtn').classList.add('btn-primary');
+          document.getElementById('saveScheduleBtn').classList.remove('btn-success');
+          document.getElementById('saveScheduleBtn').innerHTML = '💾 記得儲存變更';
+        }, 150);
+      }
     };
 
     function renderStaffTable() {
