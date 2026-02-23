@@ -1103,9 +1103,9 @@
     <!-- ─── Header ─── -->
     <header class="app-header">
       <h1>🧹 掃地排班管理系統 <span
-          style="font-size:0.8rem; font-weight:400; opacity:0.7; border:1px solid; padding:2px 6px; border-radius:4px; vertical-align:middle; margin-left:8px;">V9.0</span>
+          style="font-size:0.8rem; font-weight:400; opacity:0.7; border:1px solid; padding:2px 6px; border-radius:4px; vertical-align:middle; margin-left:8px;">V10.0</span>
       </h1>
-      <p class="subtitle">每日清掃區域智慧排班 · 空間優先增援 · 跨設備一致 (Seed V8)</p>
+      <p class="subtitle">每日清掃區域智慧排班 · 空間優先增援 · 跨設備一致 (Seed V10)</p>
     </header>
 
     <!-- ─── Tab Navigation ─── -->
@@ -3157,6 +3157,25 @@
       if (assignment) {
         assignment.staffIds = assignment.staffIds.filter(id => id !== staffId);
 
+        // 同步取消今日出勤人員的勾選狀態
+        const cbItem = document.querySelector('#staffCheckboxes .checkbox-item[data-id="' + staffId + '"]');
+        if (cbItem) {
+          cbItem.classList.remove('checked');
+          const cbInput = cbItem.querySelector('input');
+          if (cbInput) cbInput.checked = false;
+
+          if (typeof getSelectedStaffIds === 'function') {
+            sessionPresentStaffIds = getSelectedStaffIds();
+          }
+          if (typeof updatePresentCount === 'function') updatePresentCount();
+          if (typeof updatePlannerBanner === 'function') updatePlannerBanner();
+        }
+
+        // 將 currentScheduleState 裡的 presentIds 同步移除該員，確保「追加人員」能正確認知此人已不在排班中
+        if (currentScheduleState && currentScheduleState.presentIds) {
+          currentScheduleState.presentIds = currentScheduleState.presentIds.filter(id => id !== staffId);
+        }
+
         // 視覺回饋與重新渲染
         const targetChip = e.target.closest('.staff-chip');
         if (targetChip) {
@@ -3166,7 +3185,7 @@
 
         setTimeout(() => {
           renderScheduleResult(currentScheduleState.assignments, currentScheduleState.skippedAreas, currentScheduleState.warnings);
-          showToast('已移除排班人員', 'info');
+          showToast('已移除排班人員，並取消其今日出勤', 'info');
 
           document.getElementById('saveScheduleBtn').classList.add('btn-primary');
           document.getElementById('saveScheduleBtn').classList.remove('btn-success');
