@@ -24,6 +24,39 @@ const PlannerService = {
         PlannerModel.advanceWeek();
     },
 
+    movePlanner(index, direction) {
+        const rot = PlannerModel.get();
+        const targetIndex = index + direction;
+
+        if (targetIndex < 0 || targetIndex >= rot.planners.length) return;
+
+        // 交換陣列順序
+        const temp = rot.planners[index];
+        rot.planners[index] = rot.planners[targetIndex];
+        rot.planners[targetIndex] = temp;
+
+        // 如果移動的人剛好是目前負責人，讓 currentIndex 跟著跑
+        if (rot.currentIndex === index) {
+            rot.currentIndex = targetIndex;
+        } else if (rot.currentIndex === targetIndex) {
+            rot.currentIndex = index;
+        }
+
+        PlannerModel.save(rot);
+    },
+
+    setBaseDateToToday(index) {
+        const rot = PlannerModel.get();
+        // 抓取今天日期作為基準
+        const today = new Date();
+        // 如果想固定從週一算，這一步可以做更複雜的計算，但單純記錄「這天為基準」也可以
+        const dateStr = today.toISOString().slice(0, 10);
+        rot.baseDate = dateStr;
+        rot.baseIndex = index;
+        rot.currentIndex = index;
+        PlannerModel.save(rot);
+    },
+
     getRotationOverview() {
         const rot = PlannerModel.get();
         return rot.planners.map((pid, idx) => {

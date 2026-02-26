@@ -797,11 +797,18 @@ function renderRotation() {
   }
 
   container.innerHTML = overview.map(item =>
-    '<div class="rotation-item ' + (item.isCurrent ? 'current' : '') + '" onclick="PlannerService.setCurrentIndex(' + item.index + ');renderRotation();updatePlannerBanner();showToast(\'已切換本週負責人為 ' + item.staffName + '\',\'success\');">' +
+    '<div class="rotation-item ' + (item.isCurrent ? 'current' : '') + '" style="display:flex; justify-content:space-between; align-items:center;">' +
+    '<div style="cursor:pointer; flex: 1;" onclick="PlannerService.setCurrentIndex(' + item.index + ');renderRotation();updatePlannerBanner();showToast(\'已切換本週負責人為 ' + item.staffName + '\',\'success\');">' +
     '<span class="rotation-index">' + (item.index + 1) + '</span>' +
     '<span class="rotation-name">' + item.staffName + '</span>' +
     (item.isCurrent ? '<span class="badge badge-success">本週</span>' : '') +
     '<span class="rotation-deputy">代理人：' + item.deputyName + '</span>' +
+    '</div>' +
+    '<div style="display:flex; gap: 4px;">' +
+    '<button class="btn-icon" style="padding: 4px;" onclick="event.stopPropagation(); PlannerService.movePlanner(' + item.index + ', -1); renderRotation(); updatePlannerBanner();" ' + (item.index === 0 ? 'disabled' : '') + ' title="往上移">🔼</button>' +
+    '<button class="btn-icon" style="padding: 4px;" onclick="event.stopPropagation(); PlannerService.movePlanner(' + item.index + ', 1); renderRotation(); updatePlannerBanner();" ' + (item.index === overview.length - 1 ? 'disabled' : '') + ' title="往下移">🔽</button>' +
+    '<button class="btn-icon warning" style="padding: 4px; border: 1px solid var(--warning);" onclick="event.stopPropagation(); if(confirm(\'是否將此人設為今日起算的自動輪值基準點？\\n(重整並不會洗白，需要重新匯出 data.json 或匯入才會真正生效)\')) { PlannerService.setBaseDateToToday(' + item.index + '); renderRotation(); updatePlannerBanner(); showToast(\'已更新自動輪值基準日！請記得匯出.\', \'success\'); }" title="設為自動輪值基準點">📅</button>' +
+    '</div>' +
     '</div>'
   ).join('');
 }
@@ -810,7 +817,7 @@ document.getElementById('advanceWeekBtn').addEventListener('click', () => {
   PlannerService.advanceToNextWeek();
   renderRotation();
   updatePlannerBanner();
-  showToast('已推進至下一週', 'success');
+  showToast('已手動推進至下一週', 'success');
 });
 
 function renderHistory() {

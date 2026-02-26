@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "exportedAt": "2026-02-26T08:01:02.881Z",
+  "exportedAt": "2026-02-26T08:42:42.088Z",
   "staff": [
     {
       "id": "s01",
@@ -519,7 +519,9 @@
       "s25",
       "s26"
     ],
-    "currentIndex": 15
+    "currentIndex": 15,
+    "baseDate": "2026-02-26",
+    "baseIndex": 15
   },
   "schedules": []
 }

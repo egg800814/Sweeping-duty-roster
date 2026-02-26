@@ -143,7 +143,26 @@ const PlannerModel = {
   getCurrentPlanner(presentStaffIds = null) {
     const rot = this.get();
     if (rot.planners.length === 0) return null;
-    const idx = rot.currentIndex % rot.planners.length;
+
+    let idx = rot.currentIndex % rot.planners.length;
+
+    // 若有啟用自動基準日推算
+    if (rot.baseDate) {
+      const base = new Date(rot.baseDate);
+      base.setHours(0, 0, 0, 0);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const diffWeeks = Math.floor((today.getTime() - base.getTime()) / (1000 * 60 * 60 * 24 * 7));
+      let actualIndex = (rot.baseIndex !== undefined ? rot.baseIndex : rot.currentIndex) + diffWeeks;
+      while (actualIndex < 0) actualIndex += rot.planners.length;
+
+      idx = actualIndex % rot.planners.length;
+      if (rot.currentIndex !== idx) {
+        rot.currentIndex = idx;
+      }
+    }
+
     const plannerId = rot.planners[idx];
 
     if (presentStaffIds && !presentStaffIds.includes(plannerId)) {
