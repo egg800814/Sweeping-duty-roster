@@ -1,6 +1,6 @@
 // program/models.js — 資料模型與 localStorage 存取層
 
-const DATA_VERSION = 9; // v9: 更正黃珮珊部門、張東華排序調整
+const DATA_VERSION = 10.1; // v10.1: 加入自動輪值與順序調整機制
 
 const STORAGE_KEYS = {
   STAFF: 'cleaning_staff',
