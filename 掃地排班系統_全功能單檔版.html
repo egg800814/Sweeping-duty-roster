@@ -1901,7 +1901,8 @@
     }
 
     function saveData(key, data) {
-      localStorage.setItem(key, JSON.stringify(data));
+      // localStorage.setItem(key, JSON.stringify(data));
+      console.log(`[Storage Disable] ${key} 的寫入已被禁止。`);
     }
 
     // ─── Staff CRUD ───
@@ -2110,42 +2111,26 @@
       },
     };
 
-    // ─── 初始化預設資料（含版本檢查） ───
+    // ─── 初始化資料 (從外部 JSON 載入) ───
     async function initializeDefaultData() {
-      const savedVer = parseInt(localStorage.getItem(STORAGE_KEYS.DATA_VER) || '0');
-
-      // 若版本已經符合，直接結束
-      if (savedVer >= DATA_VERSION) {
-        return;
-      }
-
-      // 版本不同 → 嘗試從伺服器取得預設資料
       try {
-        const resp = await fetch('./config/default_data.json?v=' + Date.now());
+        const resp = await fetch('data.json?v=' + Date.now());
         if (resp.ok) {
           const data = await resp.json();
 
-          // 成功取得預設資料，這才清空舊資料並覆蓋
-          console.log('資料版本升級 v' + savedVer + ' → v' + DATA_VERSION + '，已從伺服器載入預設資料。');
-          Object.values(STORAGE_KEYS).forEach(key => localStorage.removeItem(key));
+          // 將資料寫入系統內的讀取快取 (若直接操作 localStorage 將失效)
+          // 需要透過全域變數或重新設計 loadData, 這裡直接覆寫儲存行為(bypass我們剛剛的禁用)
+          localStorage.setItem(STORAGE_KEYS.STAFF, JSON.stringify(data.staff || []));
+          localStorage.setItem(STORAGE_KEYS.AREAS, JSON.stringify(data.areas || []));
+          localStorage.setItem(STORAGE_KEYS.PLANNER, JSON.stringify(data.plannerRotation || { planners: [], currentIndex: 0 }));
+          localStorage.setItem(STORAGE_KEYS.SCHEDULES, JSON.stringify(data.schedules || []));
 
-          if (data.staff) StaffModel.save(data.staff);
-          if (data.areas) AreaModel.save(data.areas);
-          if (data.plannerRotation) PlannerModel.save(data.plannerRotation);
-
-          localStorage.setItem(STORAGE_KEYS.DATA_VER, String(DATA_VERSION));
+          console.log('✅ 已成功從 data.json 載入全公司共用設定！');
         } else {
           throw new Error('伺服器回傳狀態異常');
         }
       } catch (e) {
-        // 取得失敗 (例如在 file:// 下)
-        console.warn('無法連線至伺服器載入預設資料:', e.message);
-
-        // 如果目前已經有手動匯入的人員資料，我們就直接把版本號升上去，不要再嘗試重置
-        if (StaffModel.getAll().length > 0) {
-          console.log('偵測到已有本地資料，停止重置邏輯並更新版本號至 v' + DATA_VERSION);
-          localStorage.setItem(STORAGE_KEYS.DATA_VER, String(DATA_VERSION));
-        }
+        console.warn('無法連線至 data.json:', e.message);
       }
     }
   </script>
