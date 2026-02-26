@@ -1901,8 +1901,7 @@
     }
 
     function saveData(key, data) {
-      // localStorage.setItem(key, JSON.stringify(data));
-      console.log(`[Storage Disable] ${key} 的寫入已被禁止。`);
+      localStorage.setItem(key, JSON.stringify(data));
     }
 
     // ─── Staff CRUD ───
@@ -2114,23 +2113,29 @@
     // ─── 初始化資料 (從外部 JSON 載入) ───
     async function initializeDefaultData() {
       try {
-        const resp = await fetch('data.json?v=' + Date.now());
+        // 加上 cache: 'no-store' 確保每次都去 GitHub 拉最新版
+        const resp = await fetch('data.json?v=' + Date.now(), { cache: 'no-store' });
         if (resp.ok) {
           const data = await resp.json();
 
-          // 將資料寫入系統內的讀取快取 (若直接操作 localStorage 將失效)
-          // 需要透過全域變數或重新設計 loadData, 這裡直接覆寫儲存行為(bypass我們剛剛的禁用)
+          // 先強制清空畫面上亂改留下來的 localStorage 所有設定
+          Object.values(STORAGE_KEYS).forEach(key => localStorage.removeItem(key));
+
+          // 將最新的 data.json 寫入系統內
           localStorage.setItem(STORAGE_KEYS.STAFF, JSON.stringify(data.staff || []));
           localStorage.setItem(STORAGE_KEYS.AREAS, JSON.stringify(data.areas || []));
           localStorage.setItem(STORAGE_KEYS.PLANNER, JSON.stringify(data.plannerRotation || { planners: [], currentIndex: 0 }));
           localStorage.setItem(STORAGE_KEYS.SCHEDULES, JSON.stringify(data.schedules || []));
 
-          console.log('✅ 已成功從 data.json 載入全公司共用設定！');
+          // 更新版本號標記，雖然不再檢查，但讓系統知道已經載入完成
+          localStorage.setItem(STORAGE_KEYS.DATA_VER, String(DATA_VERSION));
+
+          console.log('✅ 已成功從 data.json 載入最新全公司共用設定！');
         } else {
-          throw new Error('伺服器回傳狀態異常');
+          throw new Error('伺服器回傳狀態異常 (可能找不到 data.json)');
         }
       } catch (e) {
-        console.warn('無法連線至 data.json:', e.message);
+        console.warn('無法連線至 data.json，如果是本機開啟請忽略:', e.message);
       }
     }
   </script>
