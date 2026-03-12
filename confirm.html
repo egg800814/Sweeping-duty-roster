@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MDI掃地分配確認系統</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+TC:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet">
+  <style>
+    /* ─── 沿用 index.html 設計系統 ─── */
+    :root {
+      --bg-primary: #0f1117;
+      --bg-secondary: #1a1d28;
+      --bg-card: #222536;
+      --bg-card-hover: #2a2e42;
+      --bg-input: #181b26;
+      --border-color: #2e3348;
+      --border-focus: #6c63ff;
+      --text-primary: #e8eaf0;
+      --text-secondary: #8b8fa8;
+      --text-muted: #5a5f7a;
+      --accent: #6c63ff;
+      --accent-hover: #7f78ff;
+      --accent-glow: rgba(108, 99, 255, 0.25);
+      --success: #34d399;
+      --success-bg: rgba(52, 211, 153, 0.12);
+      --danger: #f87171;
+      --danger-bg: rgba(248, 113, 113, 0.12);
+      --radius-md: 10px;
+      --radius-lg: 16px;
+      --shadow-glow: 0 0 20px var(--accent-glow);
+      --transition: 0.2s ease;
+      --font-main: 'Inter', 'Noto Sans TC', system-ui, -apple-system, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font-main);
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      line-height: 1.6;
+      padding: 20px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .app-container {
+      max-width: 500px;
+      margin: 0 auto;
+    }
+
+    header {
+      text-align: center;
+      padding: 32px 0 24px;
+    }
+
+    header h1 {
+      font-size: 2rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--accent), #a78bfa, #f472b6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      letter-spacing: -0.02em;
+    }
+
+    #loading {
+      text-align: center;
+      color: var(--text-secondary);
+      padding: 40px;
+      font-weight: 500;
+    }
+
+    /* ─── Cards ─── */
+    .card {
+      background: var(--bg-card);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border-color);
+      padding: 24px;
+      margin-bottom: 16px;
+      transition: all var(--transition);
+      animation: fadeSlideIn 0.3s ease;
+    }
+
+    @keyframes fadeSlideIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .card:hover {
+      border-color: rgba(108, 99, 255, 0.3);
+    }
+
+    .card-header {
+      margin-bottom: 20px;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 12px;
+    }
+
+    .area-badge {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--accent);
+      background: var(--accent-glow);
+      padding: 4px 10px;
+      border-radius: 20px;
+      text-transform: uppercase;
+    }
+
+    .area-name {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin-top: 8px;
+      color: var(--text-primary);
+    }
+
+    /* ─── Buttons ─── */
+    .btn {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: var(--radius-md);
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all var(--transition);
+      margin-bottom: 12px;
+      font-family: var(--font-main);
+      display: block;
+    }
+
+    .btn:last-child { margin-bottom: 0; }
+
+    .btn-confirm {
+      background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+      color: #fff;
+      box-shadow: var(--shadow-glow);
+    }
+
+    .btn-confirm:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 0 30px var(--accent-glow);
+    }
+
+    .btn-success {
+      background: var(--success-bg);
+      color: var(--success);
+      border: 1px solid rgba(52, 211, 153, 0.2);
+      cursor: not-allowed;
+    }
+
+    .btn-loading {
+      background: var(--bg-input);
+      color: var(--text-muted);
+      cursor: wait;
+    }
+
+    /* ─── No Data ─── */
+    #no-data {
+      text-align: center;
+      padding: 60px 20px;
+      background: var(--bg-secondary);
+      border-radius: var(--radius-lg);
+      border: 1px dashed var(--border-color);
+    }
+
+    #no-data h2 {
+      font-size: 1.25rem;
+      color: var(--danger);
+      font-weight: 700;
+    }
+
+    .hidden { display: none; }
+  </style>
+</head>
+
+<body>
+  <div class="app-container">
+    <header>
+      <h1>掃地分配確認</h1>
+    </header>
+
+    <div id="loading">資料讀取中...</div>
+
+    <div id="no-data" class="hidden">
+      <h2>今日打掃區域尚未安排</h2>
+    </div>
+
+    <div id="container"></div>
+  </div>
+
+  <script>
+    const API_URL = "https://script.google.com/macros/s/AKfycbzwc0f75M9G07NXpKduhMR0_EwAJXM1GPVFA7hh8JN6tt80vC8NMFe5xutV6C6AuyEv/exec";
+
+    async function fetchData() {
+      try {
+        const response = await fetch(API_URL);
+        const data = await response.json();
+        renderData(data);
+      } catch (error) {
+        console.error("載入失敗", error);
+        document.getElementById('loading').innerText = "連線失敗，請檢查網路或 API 設置";
+      }
+    }
+
+    function renderData(data) {
+      document.getElementById('loading').classList.add('hidden');
+      const container = document.getElementById('container');
+      const noData = document.getElementById('no-data');
+
+      if (!data || data.length === 0) {
+        container.innerHTML = "";
+        noData.classList.remove('hidden');
+        return;
+      }
+
+      noData.classList.add('hidden');
+      container.innerHTML = "";
+
+      data.forEach(item => {
+        const persons = item.persons.split(/[,，、]\s*/).filter(p => p.trim() !== '');
+        const statuses = [item.status1, item.status2, item.status3, item.status4];
+
+        const card = document.createElement('div');
+        card.className = "card";
+
+        let buttonsHtml = '';
+        persons.forEach((person, index) => {
+          const isConfirmed = statuses[index] === "已確認";
+          const btnClass = isConfirmed ? "btn btn-success" : "btn btn-confirm";
+          const btnText = isConfirmed ? `✓ ${person} - 已確認` : `${person}`;
+
+          buttonsHtml += `
+            <button 
+              id="btn-${item.areaCode}-${index}"
+              onclick="confirmTask('${item.areaCode}', ${index})" 
+              class="${btnClass}" 
+              ${isConfirmed ? "disabled" : ""}>
+                ${btnText}
+            </button>
+          `;
+        });
+
+        card.innerHTML = `
+          <div class="card-header">
+            <span class="area-badge">區域 ${item.areaCode}</span>
+            <div class="area-name">${item.areaName}</div>
+          </div>
+          <div class="card-body">
+            ${buttonsHtml}
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    async function confirmTask(areaCode, personIndex) {
+      const btn = document.getElementById(`btn-${areaCode}-${personIndex}`);
+      const personName = btn.innerText.split(' - ')[0];
+      const originalText = btn.innerText;
+
+      btn.innerText = "傳送中...";
+      btn.className = "btn btn-loading";
+      btn.disabled = true;
+
+      try {
+        const response = await fetch(API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({ areaCode: areaCode, personIndex: personIndex })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          btn.innerText = `✓ ${personName} - 已確認`;
+          btn.className = "btn btn-success";
+        } else {
+          throw new Error();
+        }
+      } catch (error) {
+        alert("傳送失敗，請稍後再試！");
+        btn.innerText = originalText;
+        btn.className = "btn btn-confirm";
+        btn.disabled = false;
+      }
+    }
+
+    fetchData();
+    setInterval(fetchData, 15000);
+  </script>
+</body>
+
+</html>
