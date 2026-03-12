@@ -198,12 +198,29 @@
 
   <script>
     const API_URL = "https://script.google.com/macros/s/AKfycbzwc0f75M9G07NXpKduhMR0_EwAJXM1GPVFA7hh8JN6tt80vC8NMFe5xutV6C6AuyEv/exec";
-
+    let lastDataString = ""; // 【新增這行】用來記憶上一次抓到的資料狀態
+    
     async function fetchData() {
       try {
         const response = await fetch(API_URL);
         const data = await response.json();
+        
+        // 將新抓到的陣列資料轉換成純文字字串
+        const newDataString = JSON.stringify(data);
+        
+        // 【關鍵比對】如果新資料跟舊資料一模一樣，就什麼都不做，直接跳出
+        if (newDataString === lastDataString) {
+          // console.log("資料無更動，維持原畫面"); // 如果你想在開發者工具偷看，可以把這行註解打開
+          return; 
+        }
+
+        // 如果執行到這裡，代表資料有變更！
+        // 1. 把新的資料狀態存起來
+        lastDataString = newDataString;
+        
+        // 2. 重新渲染畫面
         renderData(data);
+        
       } catch (error) {
         console.error("載入失敗", error);
         document.getElementById('loading').innerText = "連線失敗，請檢查網路或 API 設置";
