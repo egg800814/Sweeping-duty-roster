@@ -2570,6 +2570,58 @@
     let sessionPresentStaffIds = null;  // 暫存目前的勾選人員
     let sessionOptionalAreaIds = null;  // 暫存目前的區域勾選
 
+    // ─── Google Sheets 同步 ───
+    const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbzwc0f75M9G07NXpKduhMR0_EwAJXM1GPVFA7hh8JN6tt80vC8NMFe5xutV6C6AuyEv/exec';
+
+    function syncScheduleToGAS(assignments, dateStr) {
+      if (!assignments || assignments.length === 0) return;
+      
+      showToast('正在同步排班表至雲端...', 'info');
+      
+      const allStaff = StaffModel.getAll();
+      const staffMap = {};
+      allStaff.forEach(s => staffMap[s.id] = s);
+      
+      const allAreas = AreaModel.getAll();
+      const areaMap = {};
+      allAreas.forEach(a => areaMap[a.id] = a);
+
+      const payload = {
+        date: dateStr,
+        assignments: assignments.map(a => {
+          const area = areaMap[a.areaId] || { name: '未知區域' };
+          const staffNames = a.staffIds.map(sid => staffMap[sid] ? staffMap[sid].name : sid).join(', ');
+          return {
+            areaId: a.areaId,
+            areaName: area.name,
+            staffIds: a.staffIds,
+            staffNames: staffNames
+          };
+        })
+      };
+
+      fetch(GAS_API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'text/plain;charset=utf-8',
+        },
+        body: JSON.stringify(payload)
+      })
+      .then(response => response.json())
+      .then(result => {
+        if (result.status === 'success') {
+          showToast('雲端同步成功', 'success');
+        } else {
+          showToast('雲端同步失敗: ' + result.message, 'error');
+          console.error(result);
+        }
+      })
+      .catch(error => {
+        showToast('雲端同步發生錯誤', 'error');
+        console.error('GAS Sync Error:', error);
+      });
+    }
+
     // ─── Toast ───
     function showToast(message, type = 'info') {
       const container = document.getElementById('toastContainer');
@@ -2880,6 +2932,9 @@
       document.getElementById('addLateBtn').style.display = '';
 
       showToast('排班完成！已分配 ' + result.assignments.length + ' 個區域', 'success');
+      
+      // 自動同步至 Google Sheets
+      syncScheduleToGAS(result.assignments, dateInput.value);
     });
 
     document.getElementById('addLateBtn').addEventListener('click', () => {
