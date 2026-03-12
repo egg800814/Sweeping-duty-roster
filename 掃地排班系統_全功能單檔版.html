@@ -2218,6 +2218,7 @@
             result.staffIds.forEach(id => availablePool.delete(id));
           } else {
             warnings.push('⚠️ ' + area.name + '：無法安排符合條件的人員');
+            skippedAreas.push(area.id);
           }
         }
 
@@ -2229,6 +2230,7 @@
             result.staffIds.forEach(id => availablePool.delete(id));
           } else {
             warnings.push('⚠️ ' + area.name + '：人員不足，無法安排必掃區域');
+            skippedAreas.push(area.id);
           }
         }
 
@@ -2573,7 +2575,7 @@
     // ─── Google Sheets 同步 ───
     const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbzwc0f75M9G07NXpKduhMR0_EwAJXM1GPVFA7hh8JN6tt80vC8NMFe5xutV6C6AuyEv/exec';
 
-    function syncScheduleToGAS(assignments, dateStr) {
+    function syncScheduleToGAS(assignments, skippedAreas, dateStr) {
       if (!assignments || assignments.length === 0) return;
       
       showToast('正在同步排班表至雲端...', 'info');
@@ -2586,11 +2588,24 @@
       const areaMap = {};
       allAreas.forEach(a => areaMap[a.id] = a);
 
+      const combinedAssignments = [...assignments];
+      if (skippedAreas && skippedAreas.length > 0) {
+        skippedAreas.forEach(aId => {
+          combinedAssignments.push({
+            areaId: aId,
+            staffIds: [],
+          });
+        });
+      }
+
       const payload = {
         date: dateStr,
-        assignments: assignments.map(a => {
+        assignments: combinedAssignments.map(a => {
           const area = areaMap[a.areaId] || { name: '未知區域' };
-          const staffNames = a.staffIds.map(sid => staffMap[sid] ? staffMap[sid].name : sid).join(', ');
+          let staffNames = a.staffIds.map(sid => staffMap[sid] ? staffMap[sid].name : sid).join(', ');
+          if (!staffNames || staffNames.trim() === '') {
+            staffNames = '無人打掃';
+          }
           return {
             areaId: a.areaId,
             areaName: area.name,
@@ -2934,7 +2949,7 @@
       showToast('排班完成！已分配 ' + result.assignments.length + ' 個區域', 'success');
       
       // 自動同步至 Google Sheets
-      syncScheduleToGAS(result.assignments, dateInput.value);
+      syncScheduleToGAS(result.assignments, result.skippedAreas, dateInput.value);
     });
 
     document.getElementById('addLateBtn').addEventListener('click', () => {
@@ -2976,7 +2991,7 @@
       showToast('已追加人員並更新分配', 'success');
       
       // 自動同步至 Google Sheets
-      syncScheduleToGAS(result.assignments, dateInput.value);
+      syncScheduleToGAS(result.assignments, result.skippedAreas, dateInput.value);
     });
 
     function renderScheduleResult(assignments, skippedAreas, warnings) {
@@ -3005,7 +3020,10 @@
       html += '</div>';
 
       if (warnings && warnings.length > 0) {
-        html += warnings.map(w => '<div class="warning-item">' + w + '</div>').join('');
+        const displayWarnings = warnings.filter(w => !w.includes('無法安排'));
+        if (displayWarnings.length > 0) {
+          html += displayWarnings.map(w => '<div class="warning-item">' + w + '</div>').join('');
+        }
       }
 
       if (assignments.length > 0) {
@@ -3051,14 +3069,39 @@
         });
 
         if (relevantSkipped.length > 0) {
-          html += '<div style="margin-top:16px;"><h4 style="font-size:0.9rem;color:var(--text-muted);margin-bottom:8px;">⏭️ 今日跳過（人數不足）</h4></div>';
-          html += relevantSkipped.map(aId => {
+          const conditionFailedSkipped = [];
+          const headcountSkipped = [];
+          
+          relevantSkipped.forEach(aId => {
             const area = areaMap[aId];
-            return '<div class="skipped-area assignment-card" data-area-id="' + aId + '" ondragover="handleDragOver(event)" ondragenter="handleDragEnter(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event, \'' + aId + '\')" style="border: 2px dashed rgba(200,200,200,0.5); border-radius:12px; min-height:40px; justify-content:space-between;" title="拖曳人員至此即可重新啟用本區">' + 
-                   '<span>⏭️ ' + (area ? area.name : aId) + '</span>' +
-                   '<span style="font-size:0.75rem; color:var(--text-muted);">(拖曳人員至此啟用)</span>' +
-                   '</div>';
-          }).join('');
+            if (warnings && warnings.some(w => w.includes(area.name) && w.includes('無法安排'))) {
+              conditionFailedSkipped.push(aId);
+            } else {
+              headcountSkipped.push(aId);
+            }
+          });
+
+          if (conditionFailedSkipped.length > 0) {
+            html += '<div style="margin-top:16px;"><h4 style="font-size:0.9rem;color:var(--danger);margin-bottom:8px;">⚠️ 條件不符跳過（如性別限制）</h4></div>';
+            html += conditionFailedSkipped.map(aId => {
+              const area = areaMap[aId];
+              return '<div class="skipped-area assignment-card" data-area-id="' + aId + '" ondragover="handleDragOver(event)" ondragenter="handleDragEnter(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event, \'' + aId + '\')" style="border: 2px dashed rgba(239,68,68,0.5); background: rgba(239,68,68,0.05); color: var(--danger); border-radius:12px; min-height:40px; justify-content:space-between;" title="拖曳人員至此即可重新啟用本區">' + 
+                     '<span>⚠️ ' + (area ? area.name : aId) + '</span>' +
+                     '<span style="font-size:0.75rem; color:var(--danger); opacity:0.8;">(拖曳人員至此啟用)</span>' +
+                     '</div>';
+            }).join('');
+          }
+
+          if (headcountSkipped.length > 0) {
+            html += '<div style="margin-top:16px;"><h4 style="font-size:0.9rem;color:var(--text-muted);margin-bottom:8px;">⏭️ 今日跳過（人數不足）</h4></div>';
+            html += headcountSkipped.map(aId => {
+              const area = areaMap[aId];
+              return '<div class="skipped-area assignment-card" data-area-id="' + aId + '" ondragover="handleDragOver(event)" ondragenter="handleDragEnter(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event, \'' + aId + '\')" style="border: 2px dashed rgba(200,200,200,0.5); border-radius:12px; min-height:40px; justify-content:space-between;" title="拖曳人員至此即可重新啟用本區">' + 
+                     '<span>⏭️ ' + (area ? area.name : aId) + '</span>' +
+                     '<span style="font-size:0.75rem; color:var(--text-muted);">(拖曳人員至此啟用)</span>' +
+                     '</div>';
+            }).join('');
+          }
         }
 
         if (optionalSkipped.length > 0) {
@@ -3223,8 +3266,8 @@
 
       if (targetArea && targetArea.genderRestriction === 'female' && staff.gender === 'male') {
         showToast('⚠️ 錯誤：男同事不能掃女廁！', 'error');
-        return;
-      }
+          return;
+        }
 
       if (targetArea && targetArea.name.includes('廁') && dstAssignment.staffIds.length >= targetArea.maxPeople) {
         if (!confirm('⚠️ 警告：該廁所已有 ' + dstAssignment.staffIds.length + ' 人 (上限 ' + targetArea.maxPeople + ' 人)，確定要放入嗎？')) {
@@ -3250,7 +3293,7 @@
       document.getElementById('saveScheduleBtn').innerHTML = '💾 記得儲存變更';
 
       // 自動同步至 Google Sheets
-      syncScheduleToGAS(currentScheduleState.assignments, dateInput.value);
+      syncScheduleToGAS(currentScheduleState.assignments, currentScheduleState.skippedAreas, dateInput.value);
 
       dragSrcStaffId = null;
       dragSrcAreaId = null;
@@ -3302,7 +3345,7 @@
           document.getElementById('saveScheduleBtn').innerHTML = '💾 記得儲存變更';
           
           // 自動同步至 Google Sheets
-          syncScheduleToGAS(currentScheduleState.assignments, dateInput.value);
+          syncScheduleToGAS(currentScheduleState.assignments, currentScheduleState.skippedAreas, dateInput.value);
         }, 150);
       }
     };
