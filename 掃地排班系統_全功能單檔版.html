@@ -2974,6 +2974,9 @@
 
       renderScheduleResult(result.assignments, result.skippedAreas, result.warnings);
       showToast('已追加人員並更新分配', 'success');
+      
+      // 自動同步至 Google Sheets
+      syncScheduleToGAS(result.assignments, dateInput.value);
     });
 
     function renderScheduleResult(assignments, skippedAreas, warnings) {
@@ -3235,6 +3238,9 @@
       document.getElementById('saveScheduleBtn').classList.remove('btn-success');
       document.getElementById('saveScheduleBtn').innerHTML = '💾 記得儲存變更';
 
+      // 自動同步至 Google Sheets
+      syncScheduleToGAS(currentScheduleState.assignments, dateInput.value);
+
       dragSrcStaffId = null;
       dragSrcAreaId = null;
     };
@@ -3283,6 +3289,9 @@
           document.getElementById('saveScheduleBtn').classList.add('btn-primary');
           document.getElementById('saveScheduleBtn').classList.remove('btn-success');
           document.getElementById('saveScheduleBtn').innerHTML = '💾 記得儲存變更';
+          
+          // 自動同步至 Google Sheets
+          syncScheduleToGAS(currentScheduleState.assignments, dateInput.value);
         }, 150);
       }
     };
