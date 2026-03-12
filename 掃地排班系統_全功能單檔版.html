@@ -3054,7 +3054,10 @@
           html += '<div style="margin-top:16px;"><h4 style="font-size:0.9rem;color:var(--text-muted);margin-bottom:8px;">⏭️ 今日跳過（人數不足）</h4></div>';
           html += relevantSkipped.map(aId => {
             const area = areaMap[aId];
-            return '<div class="skipped-area">⏭️ ' + (area ? area.name : aId) + '</div>';
+            return '<div class="skipped-area assignment-card" data-area-id="' + aId + '" ondragover="handleDragOver(event)" ondragenter="handleDragEnter(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event, \'' + aId + '\')" style="border: 2px dashed rgba(200,200,200,0.5); border-radius:12px; min-height:40px; justify-content:space-between;" title="拖曳人員至此即可重新啟用本區">' + 
+                   '<span>⏭️ ' + (area ? area.name : aId) + '</span>' +
+                   '<span style="font-size:0.75rem; color:var(--text-muted);">(拖曳人員至此啟用)</span>' +
+                   '</div>';
           }).join('');
         }
 
@@ -3062,7 +3065,10 @@
           html += '<div style="margin-top:12px;"><h4 style="font-size:0.9rem;color:var(--text-muted);margin-bottom:8px;">🔘 未啟用的可選區域</h4></div>';
           html += optionalSkipped.map(aId => {
             const area = areaMap[aId];
-            return '<div class="skipped-area" style="border-color:rgba(96,165,250,0.15);background:var(--info-bg);color:var(--info);">🔘 ' + (area ? area.name : aId) + '</div>';
+            return '<div class="skipped-area assignment-card" data-area-id="' + aId + '" ondragover="handleDragOver(event)" ondragenter="handleDragEnter(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event, \'' + aId + '\')" style="border: 2px dashed rgba(96,165,250,0.4); background:var(--info-bg); color:var(--info); border-radius:12px; min-height:40px; justify-content:space-between;" title="拖曳人員至此即可重新啟用本區">' + 
+                   '<span>🔘 ' + (area ? area.name : aId) + '</span>' +
+                   '<span style="font-size:0.75rem; opacity:0.7;">(拖曳人員至此啟用)</span>' +
+                   '</div>';
           }).join('');
         }
       }
@@ -3201,9 +3207,14 @@
       // 極端防呆 (不應該發生)
       if (!srcAssignment) return;
       if (!dstAssignment) {
-        // 目標可能目前沒人而不在 assignments 陣列中，將其加入
+        // 目標可能目前沒人而不在 assignments 陣列中 (或是從 skippedAreas 來的)
         dstAssignment = { areaId: targetAreaId, staffIds: [] };
         assignments.push(dstAssignment);
+        
+        // 如果這個區域原本是在 skippedAreas，我們將它從跳過名單中移除
+        if (currentScheduleState.skippedAreas) {
+           currentScheduleState.skippedAreas = currentScheduleState.skippedAreas.filter(id => id !== targetAreaId);
+        }
       }
 
       // 檢查性別相容性等 (雖然拖曳是手動覆蓋，但為了防止犯錯，也可做提示)
