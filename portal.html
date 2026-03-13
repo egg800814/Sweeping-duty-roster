@@ -208,13 +208,19 @@
     </div>
 
     <script>
-      const GAS_URL = 'https://script.google.com/macros/s/AKfycbzwc0f75M9G07NXpKduhMR0_EwAJXM1GPVFA7hh8JN6tt80vC8NMFe5xutV6C6AuyEv/exec';
+      const GAS_DEFAULT_URL = 'https://script.google.com/macros/s/AKfycbzwc0f75M9G07NXpKduhMR0_EwAJXM1GPVFA7hh8JN6tt80vC8NMFe5xutV6C6AuyEv/exec';
+      const GAS_URL = localStorage.getItem('gas_api_url') || GAS_DEFAULT_URL;
+
       (async () => {
         try {
           const res = await fetch(GAS_URL);
           const data = await res.json();
-          if (Array.isArray(data) && data.length > 0 && data[0].todayPlanner) {
-            document.getElementById('plannerInfo').textContent = '📋 今日責任者：' + data[0].todayPlanner;
+          
+          // 支援物件格式 result.todayPlanner 或 陣列格式 data[0].todayPlanner
+          const planner = data.todayPlanner || (Array.isArray(data) && data.length > 0 ? data[0].todayPlanner : null);
+          
+          if (planner) {
+            document.getElementById('plannerInfo').textContent = '📋 今日責任者：' + planner;
           }
         } catch(e) {
           console.warn('無法讀取今日責任者:', e);
