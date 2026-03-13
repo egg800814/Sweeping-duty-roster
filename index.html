@@ -229,11 +229,18 @@
     </div>
 
     <script>
-        const GAS_DEFAULT_URL = 'https://script.google.com/macros/s/AKfycbzwc0f75M9G07NXpKduhMR0_EwAJXM1GPVFA7hh8JN6tt80vC8NMFe5xutV6C6AuyEv/exec';
-        const GAS_URL = localStorage.getItem('gas_api_url') || GAS_DEFAULT_URL;
-
         (async () => {
             try {
+                // 先從 data.json 取得 GAS_API_URL
+                const dataRes = await fetch('data.json?v=' + Date.now(), { cache: 'no-store' });
+                const localData = await dataRes.json();
+                const GAS_DEFAULT_URL = localData.gasApiUrl || 'YOUR_GAS_API_URL_HERE';
+                
+                // 如果有本地儲存的自訂 URL，優先使用
+                const GAS_URL = localStorage.getItem('gas_api_url') || GAS_DEFAULT_URL;
+
+                if (!GAS_URL || GAS_URL === 'YOUR_GAS_API_URL_HERE') return;
+
                 const res = await fetch(GAS_URL);
                 const data = await res.json();
 

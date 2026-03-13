@@ -1,6 +1,7 @@
 {
   "version": 2,
-  "exportedAt": "2026-02-26T09:07:07.913Z",
+  "exportedAt": "2026-03-13T13:02:15.874Z",
+  "gasApiUrl": "https://script.google.com/macros/s/AKfycbylxdMoFwSyolG-xonnAUzz5Obzp-qruRMf2NpPajdoXmnvreja_4aVyj3fAZzVyOZm/exec",
   "staff": [
     {
       "id": "s01",
@@ -354,7 +355,7 @@
       "priority": "daily",
       "genderRestriction": "malePreferred",
       "minPeople": 1,
-      "maxPeople": 3,
+      "maxPeople": 4,
       "order": 4,
       "holidayBoost": true
     },
@@ -409,7 +410,7 @@
       "priority": "flexible",
       "genderRestriction": "none",
       "minPeople": 1,
-      "maxPeople": 3,
+      "maxPeople": 6,
       "order": 9,
       "holidayBoost": false
     },
@@ -473,7 +474,7 @@
       "name": "1樓_無塵室更衣室",
       "floor": 1,
       "priority": "flexible",
-      "genderRestriction": "malePreferred",
+      "genderRestriction": "none",
       "minPeople": 1,
       "maxPeople": 1,
       "order": 15,
@@ -519,9 +520,9 @@
       "s25",
       "s26"
     ],
-    "currentIndex": 15,
-    "baseDate": "2026-02-26",
-    "baseIndex": 15
+    "currentIndex": 16,
+    "baseDate": "2026-03-13",
+    "baseIndex": 16
   },
   "schedules": []
 }

@@ -236,10 +236,30 @@
   </div>
 
   <script>
-    const GAS_DEFAULT_URL = "https://script.google.com/macros/s/AKfycbzwc0f75M9G07NXpKduhMR0_EwAJXM1GPVFA7hh8JN6tt80vC8NMFe5xutV6C6AuyEv/exec";
-    const API_URL = localStorage.getItem('gas_api_url') || GAS_DEFAULT_URL;
-    //⚠️ 注意：localStorage 是以網域+路徑為基準共用。如果兩個頁面都是從同一個資料夾用 file:// 開啟，就能共用。若未來部署到不同伺服器路徑，需要額外確認是否同源。
+    let API_URL = "";
     let lastDataString = "";
+
+    async function initAndFetchData() {
+      try {
+        // 先從 data.json 取得 GAS_API_URL
+        const dataRes = await fetch('data.json?v=' + Date.now(), { cache: 'no-store' });
+        const localData = await dataRes.json();
+        const GAS_DEFAULT_URL = localData.gasApiUrl || 'YOUR_GAS_API_URL_HERE';
+        
+        // 如果有本地儲存的自訂 URL，優先使用
+        API_URL = localStorage.getItem('gas_api_url') || GAS_DEFAULT_URL;
+
+        if (!API_URL || API_URL === 'YOUR_GAS_API_URL_HERE') {
+          document.getElementById('loading').innerText = "未設定有效的 API URL";
+          return;
+        }
+
+        await fetchData();
+      } catch (error) {
+        console.error("初始化 URL 失敗", error);
+        document.getElementById('loading').innerText = "初始化連線失敗，請檢查 API 設置";
+      }
+    }
     
     async function fetchData() {
       try {
@@ -380,7 +400,7 @@
       }
     }
 
-    fetchData();
+    initAndFetchData();
     setInterval(fetchData, 15000);
   </script>
 </body>

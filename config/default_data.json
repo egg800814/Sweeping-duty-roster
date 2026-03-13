@@ -1,4 +1,7 @@
 {
+  "version": 2,
+  "exportedAt": "2026-03-13T13:02:15.874Z",
+  "gasApiUrl": "https://script.google.com/macros/s/AKfycbylxdMoFwSyolG-xonnAUzz5Obzp-qruRMf2NpPajdoXmnvreja_4aVyj3fAZzVyOZm/exec",
   "staff": [
     {
       "id": "s01",
@@ -517,6 +520,9 @@
       "s25",
       "s26"
     ],
-    "currentIndex": 0
-  }
+    "currentIndex": 16,
+    "baseDate": "2026-03-13",
+    "baseIndex": 16
+  },
+  "schedules": []
 }
