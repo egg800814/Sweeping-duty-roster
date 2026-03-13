@@ -1088,6 +1088,18 @@
       gap: 8px;
       margin-bottom: 10px;
     }
+
+    /* ─── 確認狀態標籤 ─── */
+    .staff-chip.confirmed {
+      background: var(--success-bg) !important;
+      color: var(--success) !important;
+      border: 1px solid rgba(52, 211, 153, 0.3);
+    }
+
+    .staff-chip.confirmed::before {
+      content: '✓ ';
+      font-weight: 700;
+    }
   </style>
   <style>
     /* 讓人員分組更明顯的樣式 */
@@ -3030,11 +3042,11 @@
         html += assignments.map(a => {
           const area = areaMap[a.areaId];
           if (!area) return '';
-          const staffChips = a.staffIds.map(sid => {
+          const staffChips = a.staffIds.map((sid, idx) => {
             const s = staffMap[sid];
             if (!s) return '';
-            // 加入拖曳屬性與點擊移除事件
-            return `<span class="staff-chip ${s.gender}" draggable="true" ondragstart="handleDragStart(event, '${sid}', '${a.areaId}')" ondragend="handleDragEnd(event)" onclick="handleRemoveStaff(event, '${sid}', '${a.areaId}')" title="點擊移除該人員">\n              ${s.name}\n            </span>`;
+            // 加入拖曳屬性與點擊移除事件，並記錄索引供確認狀態使用
+            return `<span class="staff-chip ${s.gender}" data-area-id="${a.areaId}" data-person-index="${idx}" draggable="true" ondragstart="handleDragStart(event, '${sid}', '${a.areaId}')" ondragend="handleDragEnd(event)" onclick="handleRemoveStaff(event, '${sid}', '${a.areaId}')" title="點擊移除該人員">${s.name}</span>`;
           }).join('');
 
           const priorityClass = area.priority;
@@ -3117,6 +3129,41 @@
       }
 
       container.innerHTML = html;
+
+      // 排班渲染完成後，非同步從 GAS 取得確認狀態並更新顏色
+      fetchConfirmStatuses();
+    }
+
+    // ─── 從 GAS 取得今日確認狀態，並套用顏色到 staff-chip ───
+    async function fetchConfirmStatuses() {
+      if (!GAS_API_URL || GAS_API_URL === 'YOUR_GAS_API_URL_HERE') return;
+      try {
+        const res = await fetch(GAS_API_URL);
+        const data = await res.json();
+        if (!Array.isArray(data) || data.length === 0) return;
+
+        // 建立 areaCode -> [status1,status2,status3,status4] 的 Map
+        const statusMap = {};
+        data.forEach(row => {
+          statusMap[row.areaCode] = [row.status1, row.status2, row.status3, row.status4];
+        });
+
+        // 套用到所有 staff-chip
+        document.querySelectorAll('.staff-chip[data-area-id]').forEach(chip => {
+          const areaId = chip.dataset.areaId;
+          const idx = parseInt(chip.dataset.personIndex || '0', 10);
+          const statuses = statusMap[areaId];
+          if (statuses && statuses[idx] === '已確認') {
+            chip.classList.add('confirmed');
+            chip.dataset.confirmed = 'true';
+          } else {
+            chip.classList.remove('confirmed');
+            chip.dataset.confirmed = 'false';
+          }
+        });
+      } catch(err) {
+        console.warn('fetchConfirmStatuses 失敗:', err);
+      }
     }
 
     document.getElementById('saveScheduleBtn').addEventListener('click', () => {
@@ -3275,6 +3322,22 @@
         }
       }
 
+      // 已確認人員保護：若拖曳的 chip 已確認，彈出確認窗
+      const srcChip = document.querySelector(`.staff-chip[data-area-id="${dragSrcAreaId}"]`);
+      // 找到對應人員的 chip（以 staffId 在來源區的 index 推算）
+      const allSrcChips = [...document.querySelectorAll(`.staff-chip[data-area-id="${dragSrcAreaId}"]`)];
+      const draggedChipEl = allSrcChips.find(c => {
+        const idx = parseInt(c.dataset.personIndex || '0', 10);
+        return srcAssignment.staffIds[idx] === dragSrcStaffId;
+      });
+      if (draggedChipEl && draggedChipEl.dataset.confirmed === 'true') {
+        if (!confirm(`⚠️ ${staff.name} 已確認打掃，確定要移動嗎？`)) {
+          dragSrcStaffId = null;
+          dragSrcAreaId = null;
+          return;
+        }
+      }
+
       // 從來源移除
       srcAssignment.staffIds = srcAssignment.staffIds.filter(id => id !== dragSrcStaffId);
       // 加入目標
@@ -3304,7 +3367,14 @@
       e.stopPropagation();
 
       if (!currentScheduleState || !currentScheduleState.assignments) return;
-      if (!confirm('確定要從排班中移除此人員嗎？')) return;
+
+      // 已確認人員保護
+      const chip = e.target.closest('.staff-chip');
+      if (chip && chip.dataset.confirmed === 'true') {
+        const staff = StaffModel.getById(staffId);
+        const name = staff ? staff.name : staffId;
+        if (!confirm(`⚠️ ${name} 已確認打掃，確定要從排班中移除嗎？`)) return;
+      }
 
       const assignment = currentScheduleState.assignments.find(a => a.areaId === areaId);
       if (assignment) {

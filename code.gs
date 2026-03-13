@@ -152,7 +152,7 @@ function doPost(e) {
       ).setMimeType(ContentService.MimeType.JSON);
     }
 
-    // --- 模式 B：由人員於 confirm.html 觸發的「單一區域確認」 ---
+    // --- 模式 B：由確認/移動/刪除 觸發的「單一區域操作」 ---
     if (params.areaCode) {
       var data = sheet.getDataRange().getValues();
       var today = Utilities.formatDate(
@@ -160,8 +160,7 @@ function doPost(e) {
         Session.getScriptTimeZone(),
         "yyyy-MM-dd",
       );
-      var personIndex = parseInt(params.personIndex, 10);
-      var targetColumn = 5 + personIndex; // E, F, G, H 欄 (1-based: 5,6,7,8)
+      var action = params.action || "confirm";
 
       for (var j = 1; j < data.length; j++) {
         var rowDate = data[j][0];
@@ -178,9 +177,61 @@ function doPost(e) {
           formattedRowDate === today &&
           String(data[j][1]) === String(params.areaCode)
         ) {
-          sheet.getRange(j + 1, targetColumn).setValue("已確認");
+          var rowNum = j + 1; // 1-based row number
+
+          // ── confirm：寫入 E-H 欄「已確認」 ──
+          if (action === "confirm") {
+            var personIndex = parseInt(params.personIndex, 10);
+            var targetColumn = 5 + personIndex; // E=5, F=6, G=7, H=8
+            sheet.getRange(rowNum, targetColumn).setValue("已確認");
+            return ContentService.createTextOutput(
+              JSON.stringify({ success: true }),
+            ).setMimeType(ContentService.MimeType.JSON);
+          }
+
+          // ── delete：從 D 欄移除指定人員，並清空其確認欄位 ──
+          if (action === "delete") {
+            var names = String(data[j][3]).split(/[,、，]/).map(function(n){ return n.trim(); }).filter(Boolean);
+            var delIdx = parseInt(params.personIndex, 10);
+            if (delIdx < 0 || delIdx >= names.length) {
+              return ContentService.createTextOutput(JSON.stringify({ success: false, message: "人員索引超出範圍" })).setMimeType(ContentService.MimeType.JSON);
+            }
+            names.splice(delIdx, 1);
+            sheet.getRange(rowNum, 4).setValue(names.join(", ")); // D 欄
+            // 清空並重整確認欄 E-H（依刪除後的新順序）
+            sheet.getRange(rowNum, 5, 1, 4).clearContent();
+            return ContentService.createTextOutput(JSON.stringify({ success: true })).setMimeType(ContentService.MimeType.JSON);
+          }
+
+          // ── move：將人員從本區域移到另一區域 ──
+          if (action === "move") {
+            var targetAreaCode = String(params.targetAreaCode || "");
+            var moveIdx = parseInt(params.personIndex, 10);
+            var srcNames = String(data[j][3]).split(/[,、，]/).map(function(n){ return n.trim(); }).filter(Boolean);
+            if (moveIdx < 0 || moveIdx >= srcNames.length) {
+              return ContentService.createTextOutput(JSON.stringify({ success: false, message: "人員索引超出範圍" })).setMimeType(ContentService.MimeType.JSON);
+            }
+            var movedName = srcNames.splice(moveIdx, 1)[0];
+            sheet.getRange(rowNum, 4).setValue(srcNames.join(", "));
+            sheet.getRange(rowNum, 5, 1, 4).clearContent();
+
+            // 寫入目標行
+            for (var k = 1; k < data.length; k++) {
+              var kDate = data[k][0];
+              var kDateStr = kDate instanceof Date ? Utilities.formatDate(kDate, Session.getScriptTimeZone(), "yyyy-MM-dd") : String(kDate).trim();
+              if (kDateStr === today && String(data[k][1]) === targetAreaCode) {
+                var dstNames = String(data[k][3]).split(/[,、，]/).map(function(n){ return n.trim(); }).filter(Boolean);
+                dstNames.push(movedName);
+                sheet.getRange(k + 1, 4).setValue(dstNames.join(", "));
+                // 目標確認欄不動（新加入的人算未確認，保留舊人確認狀態）
+                break;
+              }
+            }
+            return ContentService.createTextOutput(JSON.stringify({ success: true, movedName: movedName })).setMimeType(ContentService.MimeType.JSON);
+          }
+
           return ContentService.createTextOutput(
-            JSON.stringify({ success: true }),
+            JSON.stringify({ success: false, message: "未知的 action: " + action }),
           ).setMimeType(ContentService.MimeType.JSON);
         }
       }
