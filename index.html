@@ -210,14 +210,14 @@
 
     <div class="portal-grid">
         <!-- 一般打掃人員入口 -->
-        <a href="viewer.html" class="portal-card">
+        <a href="/frontend/viewer.html" class="portal-card">
             <div class="icon-box">🧹</div>
             <h2>一般打掃人員</h2>
             <p>查看今日負責區域<br>並完成線上掃地確認</p>
         </a>
 
         <!-- 責任者入口 -->
-        <a href="setup.html" class="portal-card">
+        <a href="/frontend/setup.html" class="portal-card">
             <span class="badge">ADMIN</span>
             <div class="icon-box">🛠️</div>
             <h2>今週の朝掃除責任者</h2>
@@ -235,7 +235,7 @@
                 const dataRes = await fetch('../data/data.json?v=' + Date.now(), { cache: 'no-store' });
                 const localData = await dataRes.json();
                 const GAS_DEFAULT_URL = localData.gasApiUrl || 'YOUR_GAS_API_URL_HERE';
-                
+
                 // 如果有本地儲存的自訂 URL，優先使用
                 const GAS_URL = localStorage.getItem('gas_api_url') || GAS_DEFAULT_URL;
 
