@@ -1213,6 +1213,7 @@
       <div class="toolbar">
         <button class="btn btn-primary" id="generateBtn">🎲 自動排班</button>
         <div class="toolbar-actions">
+          <button class="btn btn-outline btn-sm" id="loadCloudBtn">📥 載入雲端出勤</button>
           <button class="btn btn-success btn-sm" id="saveScheduleBtn" style="display:none;">💾 儲存排班</button>
           <button class="btn btn-outline btn-sm" id="addLateBtn" style="display:none;">🏃 追加人員</button>
           <button class="btn btn-outline btn-sm" id="printBtn" style="display:none;">🖨️ 列印</button>
@@ -1295,6 +1296,20 @@
     </div>
 
     <div class="tab-panel" id="panel-settings">
+      <!-- GAS API 設定 -->
+      <div class="card" style="margin-bottom:16px;">
+        <div class="card-header">
+          <div class="card-title"><span class="icon">🔗</span> Google Sheets API 設定</div>
+        </div>
+        <p style="color:var(--text-secondary);font-size:0.85rem;margin-bottom:12px;">部署新版 GAS 後，在此更新網址即可立即生效，不需修改程式碼。</p>
+        <div style="display:flex;gap:8px;align-items:stretch;">
+          <input type="text" id="gasApiUrlInput" placeholder="https://script.google.com/macros/s/..." 
+            style="flex:1;padding:10px 12px;background:var(--bg-input);border:1px solid var(--border);border-radius:8px;color:var(--text-primary);font-size:0.85rem;font-family:monospace;">
+          <button class="btn btn-primary btn-sm" id="saveGasUrlBtn" style="white-space:nowrap;">💾 儲存</button>
+          <button class="btn btn-outline btn-sm" id="resetGasUrlBtn" style="white-space:nowrap;">↩ 重設</button>
+        </div>
+        <div id="gasUrlStatus" style="margin-top:8px;font-size:0.8rem;color:var(--text-muted);"></div>
+      </div>
       <div class="card">
         <div class="card-header">
           <div class="card-title"><span class="icon">💾</span> 資料備份與還原</div>
@@ -2585,7 +2600,81 @@
     let sessionOptionalAreaIds = null;  // 暫存目前的區域勾選
 
     // ─── Google Sheets 同步 ───
-    const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbzwc0f75M9G07NXpKduhMR0_EwAJXM1GPVFA7hh8JN6tt80vC8NMFe5xutV6C6AuyEv/exec';
+    const GAS_DEFAULT_URL = 'https://script.google.com/macros/s/AKfycbzwc0f75M9G07NXpKduhMR0_EwAJXM1GPVFA7hh8JN6tt80vC8NMFe5xutV6C6AuyEv/exec';
+    let GAS_API_URL = localStorage.getItem('gas_api_url') || GAS_DEFAULT_URL;
+
+    // ─── GAS URL 設定介面 ───
+    (function initGasUrlSettings() {
+      const input = document.getElementById('gasApiUrlInput');
+      const statusEl = document.getElementById('gasUrlStatus');
+      if (!input) return;
+
+      // 初始化顯示目前的 URL
+      input.value = GAS_API_URL;
+      statusEl.textContent = GAS_API_URL === GAS_DEFAULT_URL ? '目前使用預設 URL' : '✅ 已使用自訂 URL';
+
+      document.getElementById('saveGasUrlBtn').addEventListener('click', () => {
+        const newUrl = input.value.trim();
+        if (!newUrl.startsWith('https://script.google.com/')) {
+          statusEl.style.color = 'var(--danger)';
+          statusEl.textContent = '⚠️ 格式錯誤，請輸入正確的 GAS 網址';
+          return;
+        }
+        localStorage.setItem('gas_api_url', newUrl);
+        GAS_API_URL = newUrl;
+        statusEl.style.color = 'var(--success)';
+        statusEl.textContent = '✅ 已儲存並即時生效';
+        showToast('GAS API URL 已更新', 'success');
+      });
+
+      document.getElementById('resetGasUrlBtn').addEventListener('click', () => {
+        localStorage.removeItem('gas_api_url');
+        GAS_API_URL = GAS_DEFAULT_URL;
+        input.value = GAS_DEFAULT_URL;
+        statusEl.style.color = '';
+        statusEl.textContent = '已重設為預設 URL';
+        showToast('已重設為預設 URL', 'info');
+      });
+    })();
+
+    // ─── 功能 1：載入今日雲端出勤人員 ───
+    document.getElementById('loadCloudBtn').addEventListener('click', async () => {
+      if (!GAS_API_URL) { showToast('尚未設定 GAS API URL', 'error'); return; }
+      showToast('正在讀取雲端今日排班...', 'info');
+      try {
+        const res = await fetch(GAS_API_URL);
+        const data = await res.json();
+        if (!Array.isArray(data) || data.length === 0) {
+          showToast('雲端今日無排班資料', 'info');
+          return;
+        }
+
+        // 從雲端 D 欄收集所有出現的人員名字
+        const nameSet = new Set();
+        data.forEach(row => {
+          if (!row.persons || row.persons === '無人打掃') return;
+          row.persons.split(/[,，、]\s*/).forEach(n => { if(n.trim()) nameSet.add(n.trim()); });
+        });
+
+        // 比對本機人員名單取得 ID
+        const allStaff = StaffModel.getAll();
+        const matchedIds = allStaff.filter(s => nameSet.has(s.name)).map(s => s.id);
+
+        if (matchedIds.length === 0) {
+          showToast('雲端資料和本機人員名單對不上，請確認姓名是否一致', 'error');
+          return;
+        }
+
+        // 更新 checkbox 勾選狀態
+        sessionPresentStaffIds = matchedIds;
+        renderStaffCheckboxes();
+        updatePresentCount();
+        updatePlannerBanner();
+        showToast(`📥 已同步 ${matchedIds.length} 位出勤人員`, 'success');
+      } catch(err) {
+        showToast('載入雲端資料失敗：' + err.message, 'error');
+      }
+    });
 
     function syncScheduleToGAS(assignments, skippedAreas, dateStr) {
       if (!assignments || assignments.length === 0) return;
@@ -2610,8 +2699,13 @@
         });
       }
 
+      const presentIds = currentScheduleState ? currentScheduleState.presentIds : [];
+      const plannerObj = PlannerService.getTodayPlanner(presentIds);
+
       const payload = {
         date: dateStr,
+        plannerName: plannerObj ? plannerObj.name : '',
+        staffMeta: StaffModel.getActive().map(s => ({ name: s.name, gender: s.gender })),
         assignments: combinedAssignments.map(a => {
           const area = areaMap[a.areaId] || { name: '未知區域' };
           let staffNames = a.staffIds.map(sid => staffMap[sid] ? staffMap[sid].name : sid).join(', ');
@@ -3007,6 +3101,8 @@
     });
 
     function renderScheduleResult(assignments, skippedAreas, warnings) {
+      // 每次重繪都清除快取，確保 fetchConfirmStatuses 強制重新套用顏色
+      lastStatusCache = '';
       const container = document.getElementById('scheduleResult');
       const allStaff = StaffModel.getAll();
       const allAreas = AreaModel.getAll();

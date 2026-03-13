@@ -162,6 +162,21 @@
       cursor: wait;
     }
 
+    /* ─── Gender-tinted Buttons ─── */
+    .btn-male {
+      background: linear-gradient(135deg, #1e40af, #3b82f6);
+      color: #fff;
+      box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+    }
+    .btn-male:hover { transform: translateY(-1px); box-shadow: 0 0 30px rgba(59,130,246,0.5); }
+
+    .btn-female {
+      background: linear-gradient(135deg, #9d174d, #ec4899);
+      color: #fff;
+      box-shadow: 0 0 20px rgba(236, 72, 153, 0.3);
+    }
+    .btn-female:hover { transform: translateY(-1px); box-shadow: 0 0 30px rgba(236,72,153,0.5); }
+
     /* ─── Unassigned Area Style ─── */
     .card-unassigned {
       background: var(--bg-secondary);
@@ -221,8 +236,10 @@
   </div>
 
   <script>
-    const API_URL = "https://script.google.com/macros/s/AKfycbzwc0f75M9G07NXpKduhMR0_EwAJXM1GPVFA7hh8JN6tt80vC8NMFe5xutV6C6AuyEv/exec";
-    let lastDataString = ""; // 【新增這行】用來記憶上一次抓到的資料狀態
+    const GAS_DEFAULT_URL = "https://script.google.com/macros/s/AKfycbzwc0f75M9G07NXpKduhMR0_EwAJXM1GPVFA7hh8JN6tt80vC8NMFe5xutV6C6AuyEv/exec";
+    const API_URL = localStorage.getItem('gas_api_url') || GAS_DEFAULT_URL;
+    //⚠️ 注意：localStorage 是以網域+路徑為基準共用。如果兩個頁面都是從同一個資料夾用 file:// 開啟，就能共用。若未來部署到不同伺服器路徑，需要額外確認是否同源。
+    let lastDataString = "";
     
     async function fetchData() {
       try {
@@ -268,6 +285,7 @@
       data.forEach(item => {
         const personsArr = item.persons.split(/[,，、]\s*/).map(p => p.trim()).filter(Boolean);
         const statuses = [item.status1, item.status2, item.status3, item.status4];
+        const genders = [item.gender1 || '', item.gender2 || '', item.gender3 || '', item.gender4 || ''];
         
         // 判斷是否為無人打掃
         const isUnassigned = personsArr.length === 0 || personsArr.includes('無人打掃');
@@ -285,8 +303,21 @@
         } else {
           personsArr.forEach((person, index) => {
             const isConfirmed = statuses[index] === "已確認";
-            const btnClass = isConfirmed ? "btn btn-success" : "btn btn-confirm";
-            const btnText = isConfirmed ? `✓ ${person} - 已確認` : `${person}`;
+            const gender = genders[index];
+            const genderIcon = gender === 'male' ? '♂ ' : gender === 'female' ? '♀ ' : '';
+
+            let btnClass = "btn";
+            if (isConfirmed) {
+              btnClass += " btn-success";
+            } else if (gender === 'male') {
+              btnClass += " btn-male";
+            } else if (gender === 'female') {
+              btnClass += " btn-female";
+            } else {
+              btnClass += " btn-confirm";
+            }
+
+            const btnText = isConfirmed ? `✓ ${genderIcon}${person} - 已確認` : `${genderIcon}${person}`;
 
             cardBodyHtml += `
               <button 

@@ -19,6 +19,21 @@ function doGet(e) {
   );
   var result = [];
 
+  // 讀取 StaffData 工作表（人員名冊，含性別）
+  var staffGenderMap = {};
+  var staffSheet = ss.getSheetByName("StaffData");
+  if (staffSheet) {
+    var staffData = staffSheet.getDataRange().getValues();
+    for (var s = 1; s < staffData.length; s++) {
+      var sName = String(staffData[s][0] || "").trim();
+      var sGender = String(staffData[s][1] || "").trim();
+      if (sName) staffGenderMap[sName] = sGender;
+    }
+  }
+
+  // 讀取今日責任者 (I1 欄)
+  var todayPlanner = String(sheet.getRange("I1").getValue() || "").trim();
+
   for (var i = 1; i < data.length; i++) {
     var rowDate = data[i][0];
     var formattedRowDate = "";
@@ -29,19 +44,26 @@ function doGet(e) {
         "yyyy-MM-dd",
       );
     } else {
-      // 把字串裡面的 "/" 全部替換成 "-"
       formattedRowDate = String(rowDate).trim().replace(/\//g, "-");
     }
 
     if (formattedRowDate === today) {
+      var persons = String(data[i][3] || "");
+      var names = persons.split(/[,、，]/).map(function(n){ return n.trim(); }).filter(Boolean);
+
       result.push({
-        areaCode: String(data[i][1] || ""), // B 欄
-        areaName: String(data[i][2] || ""), // C 欄
-        persons: String(data[i][3] || ""), // D 欄
-        status1: String(data[i][4] || ""), // E 欄
-        status2: String(data[i][5] || ""), // F 欄
-        status3: String(data[i][6] || ""), // G 欄
-        status4: String(data[i][7] || ""), // H 欄
+        areaCode: String(data[i][1] || ""),   // B 欄
+        areaName: String(data[i][2] || ""),   // C 欄
+        persons: persons,                      // D 欄（原始）
+        status1: String(data[i][4] || ""),    // E 欄
+        status2: String(data[i][5] || ""),    // F 欄
+        status3: String(data[i][6] || ""),    // G 欄
+        status4: String(data[i][7] || ""),    // H 欄
+        gender1: staffGenderMap[names[0]] || "",
+        gender2: staffGenderMap[names[1]] || "",
+        gender3: staffGenderMap[names[2]] || "",
+        gender4: staffGenderMap[names[3]] || "",
+        todayPlanner: todayPlanner,
       });
     }
   }
@@ -133,6 +155,26 @@ function doPost(e) {
         sheet
           .getRange(2, 1, rowsToInsert.length, maxCols)
           .setValues(rowsToInsert);
+      }
+
+      // 6. 更新 StaffData 工作表（人員名冊含性別）
+      if (params.staffMeta && Array.isArray(params.staffMeta)) {
+        var staffSheet = ss.getSheetByName("StaffData");
+        if (!staffSheet) {
+          staffSheet = ss.insertSheet("StaffData");
+          staffSheet.hideSheet();
+          staffSheet.getRange(1, 1, 1, 2).setValues([["姓名", "性別"]]);
+        }
+        staffSheet.getRange("A2:B").clearContent();
+        var staffRows = params.staffMeta.map(function(s) { return [s.name || "", s.gender || ""]; });
+        if (staffRows.length > 0) {
+          staffSheet.getRange(2, 1, staffRows.length, 2).setValues(staffRows);
+        }
+      }
+
+      // 7. 寫入今日責任者至 I1 欄
+      if (params.plannerName !== undefined) {
+        sheet.getRange("I1").setValue(params.plannerName);
       }
 
       if (logSheet) {
