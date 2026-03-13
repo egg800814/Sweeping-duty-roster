@@ -162,19 +162,43 @@
       cursor: wait;
     }
 
-    /* ─── No Data ─── */
-    #no-data {
-      text-align: center;
-      padding: 60px 20px;
+    /* ─── Unassigned Area Style ─── */
+    .card-unassigned {
       background: var(--bg-secondary);
-      border-radius: var(--radius-lg);
       border: 1px dashed var(--border-color);
+      opacity: 0.8;
     }
 
-    #no-data h2 {
-      font-size: 1.25rem;
-      color: var(--danger);
-      font-weight: 700;
+    .card-unassigned .area-name {
+      color: var(--text-secondary);
+      text-decoration: line-through;
+      text-decoration-color: var(--text-muted);
+    }
+
+    .status-tag {
+      font-size: 0.65rem;
+      font-weight: 800;
+      padding: 2px 8px;
+      border-radius: 4px;
+      margin-left: 8px;
+      vertical-align: middle;
+    }
+
+    .tag-unassigned {
+      background: var(--bg-input);
+      color: var(--text-muted);
+      border: 1px solid var(--border-color);
+    }
+
+    .unassigned-msg {
+      text-align: center;
+      padding: 16px;
+      color: var(--text-secondary);
+      font-weight: 600;
+      font-size: 0.95rem;
+      background: var(--bg-input);
+      border-radius: var(--radius-md);
+      margin-top: 8px;
     }
 
     .hidden { display: none; }
@@ -242,36 +266,48 @@
       container.innerHTML = "";
 
       data.forEach(item => {
-        const persons = item.persons.split(/[,，、]\s*/).filter(p => p.trim() !== '');
+        const personsArr = item.persons.split(/[,，、]\s*/).map(p => p.trim()).filter(Boolean);
         const statuses = [item.status1, item.status2, item.status3, item.status4];
+        
+        // 判斷是否為無人打掃
+        const isUnassigned = personsArr.length === 0 || personsArr.includes('無人打掃');
 
         const card = document.createElement('div');
-        card.className = "card";
+        card.className = isUnassigned ? "card card-unassigned" : "card";
 
-        let buttonsHtml = '';
-        persons.forEach((person, index) => {
-          const isConfirmed = statuses[index] === "已確認";
-          const btnClass = isConfirmed ? "btn btn-success" : "btn btn-confirm";
-          const btnText = isConfirmed ? `✓ ${person} - 已確認` : `${person}`;
-
-          buttonsHtml += `
-            <button 
-              id="btn-${item.areaCode}-${index}"
-              onclick="confirmTask('${item.areaCode}', ${index})" 
-              class="${btnClass}" 
-              ${isConfirmed ? "disabled" : ""}>
-                ${btnText}
-            </button>
+        let cardBodyHtml = '';
+        if (isUnassigned) {
+          cardBodyHtml = `
+            <div class="unassigned-msg">
+              ⛱️ 此區域今日無需清潔
+            </div>
           `;
-        });
+        } else {
+          personsArr.forEach((person, index) => {
+            const isConfirmed = statuses[index] === "已確認";
+            const btnClass = isConfirmed ? "btn btn-success" : "btn btn-confirm";
+            const btnText = isConfirmed ? `✓ ${person} - 已確認` : `${person}`;
+
+            cardBodyHtml += `
+              <button 
+                id="btn-${item.areaCode}-${index}"
+                onclick="confirmTask('${item.areaCode}', ${index})" 
+                class="${btnClass}" 
+                ${isConfirmed ? "disabled" : ""}>
+                  ${btnText}
+              </button>
+            `;
+          });
+        }
 
         card.innerHTML = `
           <div class="card-header">
             <span class="area-badge">區域 ${item.areaCode}</span>
+            ${isUnassigned ? '<span class="status-tag tag-unassigned">💤 今日免掃</span>' : ''}
             <div class="area-name">${item.areaName}</div>
           </div>
           <div class="card-body">
-            ${buttonsHtml}
+            ${cardBodyHtml}
           </div>
         `;
         container.appendChild(card);
