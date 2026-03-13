@@ -3060,8 +3060,11 @@
         // 1. 更新勾選狀態
         let matchedCount = 0;
         document.querySelectorAll('#staffCheckboxes .checkbox-item').forEach(item => {
-          const name = item.querySelector('.checkbox-label').textContent.trim();
-          if (cloudStaffNames.includes(name)) {
+          const id = item.dataset.id;
+          const staffObj = StaffModel.getById(id);
+          const name = staffObj ? staffObj.name : '';
+          
+          if (name && cloudStaffNames.includes(name)) {
             item.classList.add('checked');
             item.querySelector('input').checked = true;
             matchedCount++;
