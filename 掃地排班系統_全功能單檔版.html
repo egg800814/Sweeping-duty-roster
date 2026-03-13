@@ -2604,13 +2604,15 @@
     let GAS_API_URL = localStorage.getItem('gas_api_url') || GAS_DEFAULT_URL;
 
     // 定義 Debounce 同步函數，避免連續勾選造成大量請求
+    let isSyncingFromCloud = false; // 新增此標記
     let syncDebounceTimer = null;
     function debouncedSyncToGAS() {
       if (syncDebounceTimer) clearTimeout(syncDebounceTimer);
       syncDebounceTimer = setTimeout(() => {
-        const assignments = currentScheduleState ? currentScheduleState.assignments : [];
-        const skippedAreas = currentScheduleState ? currentScheduleState.skippedAreas : [];
-        syncScheduleToGAS(assignments, skippedAreas, dateInput.value, false);
+        // 修正：當 currentScheduleState 為空時（尚未排班），仍應同步人員名單
+        const assignments = currentScheduleState ? currentScheduleState.assignments : null;
+        const skippedAreas = currentScheduleState ? currentScheduleState.skippedAreas : null;
+        syncScheduleToGAS(assignments, skippedAreas, dateInput.value, assignments !== null);
       }, 1000); // 延遲 1 秒執行
     }
 
@@ -3016,8 +3018,7 @@
       showToast('正在從雲端載入今日資料...', 'info');
       
       // 載入期間暫時停用防抖同步，避免載入名單後又觸發覆寫
-      const originalSync = debouncedSyncToGAS;
-      window.debouncedSyncToGAS = () => {};
+      isSyncingFromCloud = true;
 
       try {
         const res = await fetch(GAS_API_URL);
@@ -3100,8 +3101,8 @@
         showToast('雲端載入失敗', 'error');
         console.error('Load Error:', err);
       } finally {
-        // 恢復同步函數
-        window.debouncedSyncToGAS = originalSync;
+        // 恢復同步標記
+        isSyncingFromCloud = false;
       }
     }
 
