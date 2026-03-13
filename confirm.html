@@ -273,7 +273,9 @@
       const container = document.getElementById('container');
       const noData = document.getElementById('no-data');
 
-      if (!data || data.length === 0) {
+      const assignments = Array.isArray(data) ? data : data.assignments || [];
+
+      if (!assignments || assignments.length === 0) {
         container.innerHTML = "";
         noData.classList.remove('hidden');
         return;
@@ -282,10 +284,11 @@
       noData.classList.add('hidden');
       container.innerHTML = "";
 
-      data.forEach(item => {
-        const personsArr = item.persons.split(/[,，、]\s*/).map(p => p.trim()).filter(Boolean);
+      assignments.forEach(item => {
+        const personsStr = item.staffNames !== undefined ? item.staffNames : (item.persons || '');
+        const personsArr = personsStr.split(/[,，、]\s*/).map(p => p.trim()).filter(Boolean);
         const statuses = [item.status1, item.status2, item.status3, item.status4];
-        const genders = [item.gender1 || '', item.gender2 || '', item.gender3 || '', item.gender4 || ''];
+        const genders = item.genders || [item.gender1 || '', item.gender2 || '', item.gender3 || '', item.gender4 || ''];
         
         // 判斷是否為無人打掃
         const isUnassigned = personsArr.length === 0 || personsArr.includes('無人打掃');

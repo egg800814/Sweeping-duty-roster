@@ -15,16 +15,11 @@ function doGet(e) {
   var timezone = Session.getScriptTimeZone();
   var today = Utilities.formatDate(new Date(), timezone, "yyyy-MM-dd");
 
-  // 核心結構：確保前端一定收到這些欄位
-  var result = {
-    date: today,
-    todayPlanner: String(sheet.getRange("I1").getValue() || "").trim(),
-    staffMeta: [],
-    assignments: [],
-  };
+  var isAdmin = e && e.parameter && e.parameter.type === "admin";
 
   // 1. 讀取 StaffData (人員名冊)
   var staffGenderMap = {};
+  var staffMeta = [];
   try {
     var staffSheet = ss.getSheetByName("StaffData");
     if (staffSheet) {
@@ -34,7 +29,7 @@ function doGet(e) {
         var sGender = String(staffData[s][1] || "").trim();
         if (sName) {
           staffGenderMap[sName] = sGender;
-          result.staffMeta.push({ name: sName, gender: sGender });
+          staffMeta.push({ name: sName, gender: sGender || "male" });
         }
       }
     }
@@ -43,6 +38,9 @@ function doGet(e) {
   }
 
   // 2. 讀取 Schedule (今日排班區域)
+  var assignments = [];
+  var plannerName = String(sheet.getRange("I1").getValue() || "").trim();
+
   for (var i = 1; i < data.length; i++) {
     var rowDate = data[i][0];
     var formattedRowDate = "";
@@ -61,24 +59,46 @@ function doGet(e) {
         })
         .filter(Boolean);
 
-      result.assignments.push({
+      var areaItem = {
         areaCode: String(data[i][1] || ""),
         areaName: String(data[i][2] || ""),
-        staffNames: persons,
+        persons: persons,
+        staffNames: persons, // 兼容新版
         status1: String(data[i][4] || ""),
         status2: String(data[i][5] || ""),
         status3: String(data[i][6] || ""),
         status4: String(data[i][7] || ""),
-        genders: names.map(function (n) {
-          return staffGenderMap[n] || "";
-        }),
-      });
+      };
+
+      // 兼容舊版 gender1 ~ gender4
+      for (var k = 0; k < 4; k++) {
+        var g = "";
+        if (k < names.length) {
+          g = staffGenderMap[names[k]] || "";
+        }
+        areaItem["gender" + (k + 1)] = g;
+      }
+      
+      // 兼容新版 genders 陣列
+      areaItem.genders = names.map(function(n) { return staffGenderMap[n] || ""; });
+
+      assignments.push(areaItem);
     }
   }
 
-  return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(
-    ContentService.MimeType.JSON,
-  );
+  // 3. 回傳格式判定 (admin vs 一般確認頁)
+  if (isAdmin) {
+    var adminResult = {
+      date: today,
+      todayPlanner: plannerName,
+      staffMeta: staffMeta,
+      assignments: assignments
+    };
+    return ContentService.createTextOutput(JSON.stringify(adminResult)).setMimeType(ContentService.MimeType.JSON);
+  } else {
+    // 預設舊版相容：回傳陣列 (不包裝在 assignments 屬性內)
+    return ContentService.createTextOutput(JSON.stringify(assignments)).setMimeType(ContentService.MimeType.JSON);
+  }
 }
 
 function doPost(e) {

@@ -3021,7 +3021,9 @@
       isSyncingFromCloud = true;
 
       try {
-        const res = await fetch(GAS_API_URL);
+        const urlObj = new URL(GAS_API_URL);
+        urlObj.searchParams.set("type", "admin");
+        const res = await fetch(urlObj.toString());
         const result = await res.json();
         
         // --- 整合所有可能的出勤名單來源 ---
@@ -3031,8 +3033,10 @@
         // 來源 2：把排班區域分配表裡的人也抓出來 (防呆)
         const assignments = result.assignments || [];
         assignments.forEach(a => {
-          const names = a.staffNames.split(/[,、，]/).map(n => n.trim()).filter(Boolean);
-          cloudStaffNames.push(...names);
+          if (a.staffNames) {
+            const names = String(a.staffNames).split(/[,、，]/).map(n => n.trim()).filter(Boolean);
+            cloudStaffNames.push(...names);
+          }
         });
 
         // 來源 3：把今日負責人抓出來，確保他一定會被勾選
@@ -3074,7 +3078,7 @@
         // 2. 如果雲端已經有具體的排班區域分配，則還原顯示
         if (assignments.length > 0) {
           const restoredAssignments = assignments.map(a => {
-            const names = a.staffNames.split(/[,、，]/).map(n => n.trim()).filter(Boolean);
+            const names = a.staffNames ? String(a.staffNames).split(/[,、，]/).map(n => n.trim()).filter(Boolean) : [];
             const staffIds = names.map(n => staffNameMap[n] ? staffNameMap[n].id : null).filter(Boolean);
             return {
               areaId: a.areaCode,
