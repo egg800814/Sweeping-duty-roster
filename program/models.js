@@ -255,30 +255,30 @@ const HistoryModel = {
 };
 
 // ─── 初始化資料 (從外部 JSON 載入) ───
+// 修正：系統啟動時強制讀取 data.json，確保與外部資料同步，不依賴本機舊緩存
 async function initializeDefaultData() {
   try {
-    // 加上 cache: 'no-store' 確保每次都去 GitHub 拉最新版
     const resp = await fetch('../data/data.json?v=' + Date.now(), { cache: 'no-store' });
     if (resp.ok) {
       const data = await resp.json();
 
-      // 先強制清空畫面上亂改留下來的 localStorage 所有設定
+      // 重要：啟動時強制清除 localStorage 並以 data.json 為準
+      // 這樣當 data/data.json 被更新時，網頁一重新整理就會同步
       Object.values(STORAGE_KEYS).forEach(key => localStorage.removeItem(key));
 
-      // 將最新的 data.json 寫入系統內
       localStorage.setItem(STORAGE_KEYS.STAFF, JSON.stringify(data.staff || []));
       localStorage.setItem(STORAGE_KEYS.AREAS, JSON.stringify(data.areas || []));
       localStorage.setItem(STORAGE_KEYS.PLANNER, JSON.stringify(data.plannerRotation || { planners: [], currentIndex: 0 }));
       localStorage.setItem(STORAGE_KEYS.SCHEDULES, JSON.stringify(data.schedules || []));
 
-      // 更新版本號標記，雖然不再檢查，但讓系統知道已經載入完成
+      // 標記版本
       localStorage.setItem(STORAGE_KEYS.DATA_VER, String(DATA_VERSION));
 
-      console.log('✅ 已成功從 data.json 載入最新全公司共用設定！');
+      console.log('✅ 已成功強制從 data.json 載入最新全公司共用設定！');
     } else {
-      throw new Error('伺服器回傳狀態異常 (可能找不到 data.json)');
+      throw new Error('無法讀取 data.json (HTTP ' + resp.status + ')');
     }
   } catch (e) {
-    console.warn('無法連線至 data.json，如果是本機開啟請忽略:', e.message);
+    console.error('❌ 初始化失敗，請檢查 data/data.json 是否存在:', e.message);
   }
 }

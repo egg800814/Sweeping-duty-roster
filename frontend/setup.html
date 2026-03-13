@@ -1871,35 +1871,8 @@
       }
     };
     function initializeInlineData() {
-      const STORAGE_KEYS = {
-        STAFF: 'cleaning_staff',
-        AREAS: 'cleaning_areas',
-        PLANNER: 'cleaning_planner_rotation',
-        SCHEDULES: 'cleaning_schedules',
-        DATA_VER: 'cleaning_data_version',
-      };
-      const DATA_VERSION = 9;
-
-      const savedVer = localStorage.getItem(STORAGE_KEYS.DATA_VER);
-
-      // 如果版本不符或完全沒資料
-      if (!savedVer || parseInt(savedVer) < DATA_VERSION) {
-        console.log('單檔版初始化或版本升級 (v' + (savedVer || 0) + ' -> v' + DATA_VERSION + ')');
-        // 如果是升級且原本有人員資料，可以考慮保留，但為了安全我們先清空（因版本升級通常涉及 schema 變動）
-        // 或者我們只在完全沒資料時才初始化
-        if (!savedVer || parseInt(savedVer) < DATA_VERSION) {
-          Object.values(STORAGE_KEYS).forEach(k => localStorage.removeItem(k));
-        }
-      }
-
-      const existingStaff = localStorage.getItem(STORAGE_KEYS.STAFF);
-      if (!existingStaff || JSON.parse(existingStaff).length === 0) {
-        if (INLINE_DEFAULT_DATA.staff) localStorage.setItem(STORAGE_KEYS.STAFF, JSON.stringify(INLINE_DEFAULT_DATA.staff));
-        if (INLINE_DEFAULT_DATA.areas) localStorage.setItem(STORAGE_KEYS.AREAS, JSON.stringify(INLINE_DEFAULT_DATA.areas));
-        if (INLINE_DEFAULT_DATA.plannerRotation) localStorage.setItem(STORAGE_KEYS.PLANNER, JSON.stringify(INLINE_DEFAULT_DATA.plannerRotation));
-        localStorage.setItem(STORAGE_KEYS.DATA_VER, String(DATA_VERSION));
-        console.log('單檔版已載入內嵌預設資料');
-      }
+      // 修正：已改由 initializeDefaultData 強制讀取 data/data.json，此處僅保留空函數以維持相容性。
+      console.log('跳過內嵌資料初始化，改用強制外部資料同步。');
     }
     // program/models.js — 資料模型與 localStorage 存取層
 
