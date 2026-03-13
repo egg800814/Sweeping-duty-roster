@@ -3135,12 +3135,26 @@
     }
 
     // ─── 從 GAS 取得今日確認狀態，並套用顏色到 staff-chip ───
+    let lastStatusCache = ''; // 用於紀錄上次取得的資料內容
+    let statusPollingTimer = null;
+
     async function fetchConfirmStatuses() {
       if (!GAS_API_URL || GAS_API_URL === 'YOUR_GAS_API_URL_HERE') return;
+      
       try {
         const res = await fetch(GAS_API_URL);
         const data = await res.json();
-        if (!Array.isArray(data) || data.length === 0) return;
+        if (!Array.isArray(data)) return;
+
+        // 將關鍵狀態資料轉為字串進行快速比對
+        const currentStatusStr = JSON.stringify(data.map(r => ({ c: r.areaCode, s: [r.status1, r.status2, r.status3, r.status4] })));
+        
+        // 如果資料跟上次一樣，就直接回傳不更新 DOM
+        if (currentStatusStr === lastStatusCache) {
+          // console.log('確認狀態未變動，跳過更新');
+          return;
+        }
+        lastStatusCache = currentStatusStr;
 
         // 建立 areaCode -> [status1,status2,status3,status4] 的 Map
         const statusMap = {};
@@ -3153,16 +3167,27 @@
           const areaId = chip.dataset.areaId;
           const idx = parseInt(chip.dataset.personIndex || '0', 10);
           const statuses = statusMap[areaId];
-          if (statuses && statuses[idx] === '已確認') {
-            chip.classList.add('confirmed');
-            chip.dataset.confirmed = 'true';
+          const isConfirmed = statuses && statuses[idx] === '已確認';
+          
+          if (isConfirmed) {
+            if (chip.dataset.confirmed !== 'true') {
+              chip.classList.add('confirmed');
+              chip.dataset.confirmed = 'true';
+            }
           } else {
-            chip.classList.remove('confirmed');
-            chip.dataset.confirmed = 'false';
+            if (chip.dataset.confirmed === 'true') {
+              chip.classList.remove('confirmed');
+              chip.dataset.confirmed = 'false';
+            }
           }
         });
+        // console.log('確認狀態已更新');
       } catch(err) {
         console.warn('fetchConfirmStatuses 失敗:', err);
+      } finally {
+        // 設定 10 秒後再次執行 (避免同時有多個 timer)
+        if (statusPollingTimer) clearTimeout(statusPollingTimer);
+        statusPollingTimer = setTimeout(fetchConfirmStatuses, 10000);
       }
     }
 
