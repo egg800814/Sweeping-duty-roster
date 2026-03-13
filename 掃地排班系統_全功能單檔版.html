@@ -2603,6 +2603,17 @@
     const GAS_DEFAULT_URL = 'https://script.google.com/macros/s/AKfycbzwc0f75M9G07NXpKduhMR0_EwAJXM1GPVFA7hh8JN6tt80vC8NMFe5xutV6C6AuyEv/exec';
     let GAS_API_URL = localStorage.getItem('gas_api_url') || GAS_DEFAULT_URL;
 
+    // 定義 Debounce 同步函數，避免連續勾選造成大量請求
+    let syncDebounceTimer = null;
+    function debouncedSyncToGAS() {
+      if (syncDebounceTimer) clearTimeout(syncDebounceTimer);
+      syncDebounceTimer = setTimeout(() => {
+        const assignments = currentScheduleState ? currentScheduleState.assignments : [];
+        const skippedAreas = currentScheduleState ? currentScheduleState.skippedAreas : [];
+        syncScheduleToGAS(assignments, skippedAreas, dateInput.value, false);
+      }, 1000); // 延遲 1 秒執行
+    }
+
     // ─── GAS URL 設定介面 ───
     (function initGasUrlSettings() {
       const input = document.getElementById('gasApiUrlInput');
@@ -2638,48 +2649,10 @@
     })();
 
     // ─── 功能 1：載入今日雲端出勤人員 ───
-    document.getElementById('loadCloudBtn').addEventListener('click', async () => {
-      if (!GAS_API_URL) { showToast('尚未設定 GAS API URL', 'error'); return; }
-      showToast('正在讀取雲端今日排班...', 'info');
-      try {
-        const res = await fetch(GAS_API_URL);
-        const data = await res.json();
-        if (!Array.isArray(data) || data.length === 0) {
-          showToast('雲端今日無排班資料', 'info');
-          return;
-        }
+    document.getElementById('loadCloudBtn').addEventListener('click', loadAttendanceFromGAS);
 
-        // 從雲端 D 欄收集所有出現的人員名字
-        const nameSet = new Set();
-        data.forEach(row => {
-          if (!row.persons || row.persons === '無人打掃') return;
-          row.persons.split(/[,，、]\s*/).forEach(n => { if(n.trim()) nameSet.add(n.trim()); });
-        });
-
-        // 比對本機人員名單取得 ID
-        const allStaff = StaffModel.getAll();
-        const matchedIds = allStaff.filter(s => nameSet.has(s.name)).map(s => s.id);
-
-        if (matchedIds.length === 0) {
-          showToast('雲端資料和本機人員名單對不上，請確認姓名是否一致', 'error');
-          return;
-        }
-
-        // 更新 checkbox 勾選狀態
-        sessionPresentStaffIds = matchedIds;
-        renderStaffCheckboxes();
-        updatePresentCount();
-        updatePlannerBanner();
-        showToast(`📥 已同步 ${matchedIds.length} 位出勤人員`, 'success');
-      } catch(err) {
-        showToast('載入雲端資料失敗：' + err.message, 'error');
-      }
-    });
-
-    function syncScheduleToGAS(assignments, skippedAreas, dateStr) {
-      if (!assignments || assignments.length === 0) return;
-      
-      showToast('正在同步排班表至雲端...', 'info');
+    function syncScheduleToGAS(assignments, skippedAreas, dateStr, isFullSync = false) {
+      showToast('正在同步資料至雲端...', 'info');
       
       const allStaff = StaffModel.getAll();
       const staffMap = {};
@@ -2689,24 +2662,29 @@
       const areaMap = {};
       allAreas.forEach(a => areaMap[a.id] = a);
 
-      const combinedAssignments = [...assignments];
-      if (skippedAreas && skippedAreas.length > 0) {
-        skippedAreas.forEach(aId => {
-          combinedAssignments.push({
-            areaId: aId,
-            staffIds: [],
-          });
-        });
-      }
-
-      const presentIds = currentScheduleState ? currentScheduleState.presentIds : [];
+      const presentIds = getSelectedStaffIds();
       const plannerObj = PlannerService.getTodayPlanner(presentIds);
 
       const payload = {
         date: dateStr,
         plannerName: plannerObj ? plannerObj.name : '',
-        staffMeta: StaffModel.getActive().map(s => ({ name: s.name, gender: s.gender })),
-        assignments: combinedAssignments.map(a => {
+        // 傳送當前勾選的所有人員名單與性別
+        staffMeta: presentIds.map(id => staffMap[id]).filter(Boolean).map(s => ({ name: s.name, gender: s.gender })),
+      };
+
+      // 只有在 isFullSync 為 true 時才傳送 assignments
+      if (isFullSync) {
+        const combinedAssignments = assignments ? [...assignments] : [];
+        if (skippedAreas && skippedAreas.length > 0) {
+          skippedAreas.forEach(aId => {
+            combinedAssignments.push({
+              areaId: aId,
+              staffIds: [],
+            });
+          });
+        }
+        
+        payload.assignments = combinedAssignments.map(a => {
           const area = areaMap[a.areaId] || { name: '未知區域' };
           let staffNames = a.staffIds.map(sid => staffMap[sid] ? staffMap[sid].name : sid).join(', ');
           if (!staffNames || staffNames.trim() === '') {
@@ -2718,8 +2696,8 @@
             staffIds: a.staffIds,
             staffNames: staffNames
           };
-        })
-      };
+        });
+      }
 
       fetch(GAS_API_URL, {
         method: 'POST',
@@ -2931,6 +2909,11 @@
 
           updatePresentCount();
           updatePlannerBanner();
+          
+          // 自動同步至 Google Sheets
+          if (!isSyncingFromCloud) { // 避免載入時觸發回傳
+            debouncedSyncToGAS();
+          }
         });
       });
     }
@@ -2961,6 +2944,9 @@
       sessionPresentStaffIds = getSelectedStaffIds();
       updatePresentCount();
       updatePlannerBanner();
+      if (!isSyncingFromCloud) {
+        debouncedSyncToGAS();
+      }
     });
 
     document.getElementById('deselectAllStaff').addEventListener('click', () => {
@@ -2971,6 +2957,9 @@
       sessionPresentStaffIds = [];
       updatePresentCount();
       updatePlannerBanner();
+      if (!isSyncingFromCloud) {
+        debouncedSyncToGAS();
+      }
     });
 
     document.getElementById('selectDefaultStaff').addEventListener('click', () => {
@@ -2992,6 +2981,9 @@
       sessionPresentStaffIds = getSelectedStaffIds();
       updatePresentCount();
       updatePlannerBanner();
+      if (!isSyncingFromCloud) {
+        debouncedSyncToGAS();
+      }
     });
 
     function updatePlannerBanner() {
@@ -3012,6 +3004,104 @@
       } else {
         nameEl.textContent = '尚未設定';
         noteEl.style.display = 'none';
+      }
+    }
+
+    async function loadAttendanceFromGAS() {
+      if (!GAS_API_URL || GAS_API_URL === 'YOUR_GAS_API_URL_HERE') {
+        showToast('請先設定有效的 GAS API URL', 'error');
+        return;
+      }
+      
+      showToast('正在從雲端載入今日資料...', 'info');
+      
+      // 載入期間暫時停用防抖同步，避免載入名單後又觸發覆寫
+      const originalSync = debouncedSyncToGAS;
+      window.debouncedSyncToGAS = () => {};
+
+      try {
+        const res = await fetch(GAS_API_URL);
+        const result = await res.json();
+        
+        // --- 整合所有可能的出勤名單來源 ---
+        // 來源 1：雲端 StaffData 名冊
+        let cloudStaffNames = (result.staffMeta || []).map(s => s.name);
+        
+        // 來源 2：把排班區域分配表裡的人也抓出來 (防呆)
+        const assignments = result.assignments || [];
+        assignments.forEach(a => {
+          const names = a.staffNames.split(/[,、，]/).map(n => n.trim()).filter(Boolean);
+          cloudStaffNames.push(...names);
+        });
+
+        // 來源 3：把今日負責人抓出來，確保他一定會被勾選
+        if (result.todayPlanner) {
+          cloudStaffNames.push(result.todayPlanner);
+        }
+
+        // 去重複並過濾空值
+        cloudStaffNames = [...new Set(cloudStaffNames)].filter(Boolean);
+
+        if (cloudStaffNames.length === 0) {
+          showToast('雲端目前尚未有今日資料', 'info');
+          window.debouncedSyncToGAS = originalSync;
+          return;
+        }
+
+        const allStaff = StaffModel.getAll();
+        const staffNameMap = {};
+        allStaff.forEach(s => staffNameMap[s.name] = s);
+
+        // 1. 更新勾選狀態
+        let matchedCount = 0;
+        document.querySelectorAll('#staffCheckboxes .checkbox-item').forEach(item => {
+          const name = item.querySelector('.checkbox-label').textContent.trim();
+          if (cloudStaffNames.includes(name)) {
+            item.classList.add('checked');
+            item.querySelector('input').checked = true;
+            matchedCount++;
+          } else {
+            item.classList.remove('checked');
+            item.querySelector('input').checked = false;
+          }
+        });
+
+        sessionPresentStaffIds = getSelectedStaffIds();
+        updatePresentCount();
+        updatePlannerBanner();
+
+        // 2. 如果雲端已經有具體的排班區域分配，則還原顯示
+        if (assignments.length > 0) {
+          const restoredAssignments = assignments.map(a => {
+            const names = a.staffNames.split(/[,、，]/).map(n => n.trim()).filter(Boolean);
+            const staffIds = names.map(n => staffNameMap[n] ? staffNameMap[n].id : null).filter(Boolean);
+            return {
+              areaId: a.areaCode,
+              staffIds: staffIds
+            };
+          }).filter(a => a.areaId && a.staffIds.length > 0);
+
+          if (restoredAssignments.length > 0) {
+            currentScheduleState = {
+              assignments: restoredAssignments,
+              skippedAreas: [],
+              presentIds: sessionPresentStaffIds,
+              plannerId: PlannerService.getTodayPlanner(sessionPresentStaffIds)?.id
+            };
+            renderScheduleResult(restoredAssignments, [], []);
+            document.getElementById('saveScheduleBtn').style.display = '';
+            document.getElementById('printBtn').style.display = '';
+            document.getElementById('addLateBtn').style.display = '';
+          }
+        }
+
+        showToast(`成功從雲端載入 ${matchedCount} 位人員勾選狀態。`, 'success');
+      } catch (err) {
+        showToast('雲端載入失敗', 'error');
+        console.error('Load Error:', err);
+      } finally {
+        // 恢復同步函數
+        window.debouncedSyncToGAS = originalSync;
       }
     }
 
@@ -3055,7 +3145,7 @@
       showToast('排班完成！已分配 ' + result.assignments.length + ' 個區域', 'success');
       
       // 自動同步至 Google Sheets
-      syncScheduleToGAS(result.assignments, result.skippedAreas, dateInput.value);
+      syncScheduleToGAS(result.assignments, result.skippedAreas, dateInput.value, true);
     });
 
     document.getElementById('addLateBtn').addEventListener('click', () => {
@@ -3097,7 +3187,7 @@
       showToast('已追加人員並更新分配', 'success');
       
       // 自動同步至 Google Sheets
-      syncScheduleToGAS(result.assignments, result.skippedAreas, dateInput.value);
+      syncScheduleToGAS(result.assignments, result.skippedAreas, dateInput.value, true);
     });
 
     function renderScheduleResult(assignments, skippedAreas, warnings) {
@@ -3477,7 +3567,7 @@
       document.getElementById('saveScheduleBtn').innerHTML = '💾 記得儲存變更';
 
       // 自動同步至 Google Sheets
-      syncScheduleToGAS(currentScheduleState.assignments, currentScheduleState.skippedAreas, dateInput.value);
+      syncScheduleToGAS(currentScheduleState.assignments, currentScheduleState.skippedAreas, dateInput.value, true);
 
       dragSrcStaffId = null;
       dragSrcAreaId = null;
@@ -3536,7 +3626,7 @@
           document.getElementById('saveScheduleBtn').innerHTML = '💾 記得儲存變更';
           
           // 自動同步至 Google Sheets
-          syncScheduleToGAS(currentScheduleState.assignments, currentScheduleState.skippedAreas, dateInput.value);
+          syncScheduleToGAS(currentScheduleState.assignments, currentScheduleState.skippedAreas, dateInput.value, true);
         }, 150);
       }
     };
@@ -3632,6 +3722,12 @@
       closeModal();
       renderStaffTable();
       showToast('已新增人員：' + name, 'success');
+      
+      // 若在排班頁面且新增了預設出勤的人，觸發同步
+      if (document.querySelector('.tab-btn[data-tab="schedule"]').classList.contains('active')) {
+        renderStaffCheckboxes();
+        debouncedSyncToGAS();
+      }
     };
 
     window.editStaff = function (id) {
@@ -3693,6 +3789,12 @@
       StaffModel.remove(id);
       renderStaffTable();
       showToast('已刪除：' + s.name, 'info');
+
+      // 刪除人員後同步更新排班勾選與雲端
+      if (document.querySelector('.tab-btn[data-tab="schedule"]').classList.contains('active')) {
+        renderStaffCheckboxes();
+        debouncedSyncToGAS();
+      }
     };
 
     // ═══════════════════════════════════════
