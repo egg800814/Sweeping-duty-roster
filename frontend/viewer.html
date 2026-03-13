@@ -242,7 +242,7 @@
     async function initAndFetchData() {
       try {
         // 先從 data.json 取得 GAS_API_URL
-        const dataRes = await fetch('data.json?v=' + Date.now(), { cache: 'no-store' });
+        const dataRes = await fetch('../data/data.json?v=' + Date.now(), { cache: 'no-store' });
         const localData = await dataRes.json();
         const GAS_DEFAULT_URL = localData.gasApiUrl || 'YOUR_GAS_API_URL_HERE';
         

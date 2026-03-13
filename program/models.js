@@ -258,7 +258,7 @@ const HistoryModel = {
 async function initializeDefaultData() {
   try {
     // 加上 cache: 'no-store' 確保每次都去 GitHub 拉最新版
-    const resp = await fetch('data.json?v=' + Date.now(), { cache: 'no-store' });
+    const resp = await fetch('../data/data.json?v=' + Date.now(), { cache: 'no-store' });
     if (resp.ok) {
       const data = await resp.json();
 
