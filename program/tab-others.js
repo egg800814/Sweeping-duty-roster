@@ -169,9 +169,18 @@ document.getElementById('holidayLabel').addEventListener('click', (e) => {
 
 // ─── 應用程式啟動入口 ───
 async function boot() {
-    await initializeDefaultData();
-    refreshSchedulePanel();
-    renderOptionalToggles();
+  await initializeDefaultData();
+  refreshSchedulePanel();
+  renderOptionalToggles();
+
+  // ▼▼▼ 新增這一段：自動執行載入雲端出勤 ▼▼▼
+  if (typeof loadAttendanceFromGAS === 'function') {
+    // 稍微延遲 0.5 秒，確保 Google Sheets 網址等所有設定都讀取完畢後再觸發
+    setTimeout(() => {
+      loadAttendanceFromGAS();
+    }, 500);
+  }
+  // ▲▲▲ 新增結束 ▲▲▲
 }
 
 boot();
