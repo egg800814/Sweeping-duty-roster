@@ -140,7 +140,7 @@ document.getElementById('importFile').addEventListener('change', async (e) => {
     e.target.value = '';
 });
 
-document.getElementById('clearAllBtn').addEventListener('click', () => {
+document.getElementById('clearAllBtn')?.addEventListener('click', () => {
     if (!confirm('⚠️ 確定清除全部資料嗎？此操作無法復原！')) return;
     if (!confirm('再次確認：所有人員、區域、排班紀錄都將被刪除？')) return;
     DataIO.clearAll();
@@ -149,7 +149,7 @@ document.getElementById('clearAllBtn').addEventListener('click', () => {
     renderOptionalToggles();
 });
 
-document.getElementById('resetDefaultBtn').addEventListener('click', async () => {
+document.getElementById('resetDefaultBtn')?.addEventListener('click', async () => {
     if (!confirm('確定重置為預設資料嗎？現有資料將被覆蓋。')) return;
     DataIO.clearAll();
     localStorage.removeItem('cleaning_data_version');
