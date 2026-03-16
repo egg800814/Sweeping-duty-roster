@@ -1290,3 +1290,8 @@ body.portal-a {
   .staff-chip { background: #eee; color: #333; }
   .schedule-result { page-break-inside: avoid; }
 }
+
+/* 讓人員分組更明顯的樣式 */
+.dept-group {
+  break-inside: avoid;
+} 
