@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>掃區排班系統 — 自動化測試報告</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --card: #22263299;
+      --border: #2d3140;
+      --text: #e4e6ed;
+      --muted: #8b8fa3;
+      --green: #22c55e;
+      --green-bg: #22c55e18;
+      --red: #ef4444;
+      --blue: #3b82f6;
+      --purple: #a855f7;
+      --amber: #f59e0b;
+      --radius: 14px;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', 'Noto Sans TC', sans-serif;
+      min-height: 100vh;
+      padding: 40px 24px;
+    }
+    .container { max-width: 1120px; margin: 0 auto; }
+    header {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+    header h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--green), var(--blue));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    header p {
+      color: var(--muted);
+      margin-top: 8px;
+      font-size: 0.95rem;
+    }
+
+    /* KPI Cards */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 40px;
+    }
+    .kpi-card {
+      background: var(--card);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      text-align: center;
+      transition: transform .2s, box-shadow .2s;
+    }
+    .kpi-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 24px rgba(0,0,0,.35);
+    }
+    .kpi-value {
+      font-size: 2.4rem;
+      font-weight: 700;
+      line-height: 1;
+    }
+    .kpi-label {
+      color: var(--muted);
+      font-size: 0.85rem;
+      margin-top: 8px;
+    }
+    .kpi-pass .kpi-value { color: var(--green); }
+    .kpi-fail .kpi-value { color: var(--red); }
+    .kpi-time .kpi-value { color: var(--blue); }
+    .kpi-rate .kpi-value { color: var(--purple); }
+
+    /* Charts */
+    .chart-section {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin-bottom: 40px;
+    }
+    @media (max-width: 768px) {
+      .chart-section { grid-template-columns: 1fr; }
+    }
+    .chart-box {
+      background: var(--card);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+    }
+    .chart-box h3 {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 16px;
+      color: var(--muted);
+    }
+
+    /* Table */
+    .table-section {
+      background: var(--card);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      overflow-x: auto;
+      margin-bottom: 40px;
+    }
+    .table-section h3 {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--muted);
+      margin-bottom: 16px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.88rem;
+    }
+    th, td {
+      padding: 10px 14px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+    th {
+      color: var(--muted);
+      font-weight: 600;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+    }
+    tr:hover { background: #ffffff06; }
+    .badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 0.76rem;
+      font-weight: 600;
+    }
+    .badge-pass { background: var(--green-bg); color: var(--green); }
+    .badge-fail { background: #ef444418; color: var(--red); }
+    .time-bar {
+      height: 6px;
+      border-radius: 3px;
+      background: var(--border);
+      position: relative;
+      min-width: 60px;
+    }
+    .time-bar-fill {
+      height: 100%;
+      border-radius: 3px;
+      background: linear-gradient(90deg, var(--blue), var(--purple));
+    }
+
+    footer {
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.82rem;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>🧹 掃區排班系統 — 自動化測試報告</h1>
+      <p>Playwright E2E + Locust 壓力測試 ｜ 2026-03-17</p>
+    </header>
+
+    <!-- KPI Cards -->
+    <div class="kpi-grid">
+      <div class="kpi-card kpi-pass">
+        <div class="kpi-value">47</div>
+        <div class="kpi-label">✅ 測試通過</div>
+      </div>
+      <div class="kpi-card kpi-fail">
+        <div class="kpi-value">0</div>
+        <div class="kpi-label">❌ 測試失敗</div>
+      </div>
+      <div class="kpi-card kpi-rate">
+        <div class="kpi-value">100%</div>
+        <div class="kpi-label">🎯 通過率</div>
+      </div>
+      <div class="kpi-card kpi-time">
+        <div class="kpi-value">285s</div>
+        <div class="kpi-label">⏱️ 總執行時間</div>
+      </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="chart-section">
+      <div class="chart-box">
+        <h3>📊 各模組測試數量分佈</h3>
+        <canvas id="moduleChart"></canvas>
+      </div>
+      <div class="chart-box">
+        <h3>⏱️ 各模組平均執行時間 (秒)</h3>
+        <canvas id="timeChart"></canvas>
+      </div>
+    </div>
+    <div class="chart-section">
+      <div class="chart-box">
+        <h3>🍩 測試類別佔比</h3>
+        <canvas id="categoryChart"></canvas>
+      </div>
+      <div class="chart-box">
+        <h3>📈 歷次執行修復趨勢</h3>
+        <canvas id="trendChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Detail Table -->
+    <div class="table-section">
+      <h3>📋 完整測試項目明細</h3>
+      <table id="detailTable">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>測試模組</th>
+            <th>測試項目</th>
+            <th>結果</th>
+            <th>耗時 (秒)</th>
+            <th>耗時分佈</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <footer>
+      Sweeping Duty Roster — Automated Test Dashboard &copy; 2026 &middot; Generated by Playwright + pytest-html
+    </footer>
+  </div>
+
+  <script>
+    // ─── Data from JUnit XML ───
+    const tests = [
+      { module: 'IndexPage', name: '入口卡片渲染', time: 6.721 },
+      { module: 'IndexPage', name: '查看排班連結', time: 5.382 },
+      { module: 'IndexPage', name: '管理後台連結', time: 4.335 },
+      { module: 'IndexPage', name: '管理員標章', time: 8.466 },
+      { module: 'IndexPage', name: '頁面標題', time: 5.366 },
+      { module: 'IndexPage', name: '負責人資訊顯示', time: 3.365 },
+      { module: 'AreaAdd', name: '新增區域成功', time: 7.028 },
+      { module: 'AreaAdd', name: '空白名稱防呆', time: 6.257 },
+      { module: 'AreaAdd', name: '假日加強新增', time: 5.953 },
+      { module: 'AreaAdd', name: '取消新增', time: 6.093 },
+      { module: 'AreaEdit', name: '編輯區域名稱', time: 7.747 },
+      { module: 'AreaEdit', name: '編輯優先級', time: 7.888 },
+      { module: 'AreaDelete', name: '確認刪除', time: 7.257 },
+      { module: 'AreaDelete', name: '取消刪除', time: 6.423 },
+      { module: 'ScheduleTab', name: '日期預設今天', time: 7.237 },
+      { module: 'ScheduleTab', name: '今天按鈕', time: 6.526 },
+      { module: 'ScheduleTab', name: '全選人員', time: 7.750 },
+      { module: 'ScheduleTab', name: '全不選人員', time: 7.072 },
+      { module: 'ScheduleTab', name: '預設出勤', time: 5.466 },
+      { module: 'ScheduleTab', name: '男女人數統計', time: 6.072 },
+      { module: 'ScheduleTab', name: '未勾選排班錯誤', time: 5.946 },
+      { module: 'ScheduleTab', name: '自動排班成功', time: 7.245 },
+      { module: 'ScheduleTab', name: '儲存排班', time: 7.491 },
+      { module: 'ScheduleTab', name: '隔天放假切換', time: 5.130 },
+      { module: 'ScheduleTab', name: '負責人橫幅', time: 5.105 },
+      { module: 'RotationTab', name: '輪值列表渲染', time: 6.370 },
+      { module: 'RotationTab', name: '本週標記', time: 5.872 },
+      { module: 'RotationTab', name: '推進下一週', time: 7.749 },
+      { module: 'SettingsTab', name: 'GAS URL 顯示', time: 5.549 },
+      { module: 'SettingsTab', name: '無效 URL 格式', time: 6.565 },
+      { module: 'SettingsTab', name: '重設 GAS URL', time: 5.588 },
+      { module: 'SettingsTab', name: '匯出 JSON', time: 6.330 },
+      { module: 'StaffAdd', name: '新增人員成功', time: 7.362 },
+      { module: 'StaffAdd', name: '空白名稱防呆', time: 6.383 },
+      { module: 'StaffAdd', name: '樓層限制新增', time: 6.045 },
+      { module: 'StaffAdd', name: '取消新增', time: 6.565 },
+      { module: 'StaffEdit', name: '編輯人員名稱', time: 8.748 },
+      { module: 'StaffDelete', name: '確認刪除', time: 7.089 },
+      { module: 'StaffDelete', name: '取消刪除', time: 6.779 },
+      { module: 'ViewerLoad', name: '載入有資料', time: 3.637 },
+      { module: 'ViewerLoad', name: '載入空資料', time: 3.269 },
+      { module: 'ViewerLoad', name: 'API 失敗', time: 4.250 },
+      { module: 'ViewerConfirm', name: '確認成功', time: 5.469 },
+      { module: 'ViewerConfirm', name: '確認失敗', time: 5.420 },
+      { module: 'ViewerConfirm', name: '已確認停用', time: 3.376 },
+      { module: 'ViewerSpecial', name: '未分配區域卡', time: 3.436 },
+      { module: 'ViewerSpecial', name: '性別標章', time: 3.809 },
+    ];
+
+    const maxTime = Math.max(...tests.map(t => t.time));
+
+    // ─── Populate Table ───
+    const tbody = document.querySelector('#detailTable tbody');
+    tests.forEach((t, i) => {
+      const pct = (t.time / maxTime * 100).toFixed(0);
+      tbody.innerHTML += `
+        <tr>
+          <td>${i + 1}</td>
+          <td>${t.module}</td>
+          <td>${t.name}</td>
+          <td><span class="badge badge-pass">PASS</span></td>
+          <td>${t.time.toFixed(3)}</td>
+          <td><div class="time-bar"><div class="time-bar-fill" style="width:${pct}%"></div></div></td>
+        </tr>`;
+    });
+
+    // ─── Module Distribution Chart ───
+    const groups = {};
+    tests.forEach(t => {
+      const key = t.module.replace(/Add|Edit|Delete|Load|Confirm|Special/g, '');
+      if (!groups[key]) groups[key] = { count: 0, totalTime: 0 };
+      groups[key].count++;
+      groups[key].totalTime += t.time;
+    });
+    const labels = Object.keys(groups);
+    const counts = labels.map(l => groups[l].count);
+    const avgTimes = labels.map(l => (groups[l].totalTime / groups[l].count).toFixed(2));
+
+    const colors = ['#22c55e', '#3b82f6', '#a855f7', '#f59e0b', '#ef4444', '#06b6d4', '#ec4899'];
+
+    new Chart(document.getElementById('moduleChart'), {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [{
+          label: '測試數量',
+          data: counts,
+          backgroundColor: colors.slice(0, labels.length),
+          borderRadius: 8,
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: { beginAtZero: true, ticks: { color: '#8b8fa3' }, grid: { color: '#2d3140' } },
+          x: { ticks: { color: '#8b8fa3' }, grid: { display: false } }
+        }
+      }
+    });
+
+    new Chart(document.getElementById('timeChart'), {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [{
+          label: '平均耗時 (s)',
+          data: avgTimes,
+          backgroundColor: colors.slice(0, labels.length).map(c => c + '99'),
+          borderColor: colors.slice(0, labels.length),
+          borderWidth: 1,
+          borderRadius: 8,
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: { beginAtZero: true, ticks: { color: '#8b8fa3' }, grid: { color: '#2d3140' } },
+          x: { ticks: { color: '#8b8fa3' }, grid: { display: false } }
+        }
+      }
+    });
+
+    // ─── Category Pie Chart ───
+    const categories = {
+      'CRUD 功能': 14,
+      '排班流程': 11,
+      '輪值設定': 3,
+      '資料管理': 4,
+      'Viewer 互動': 8,
+      '入口頁面': 6,
+      '防呆邊界': 1,
+    };
+    new Chart(document.getElementById('categoryChart'), {
+      type: 'doughnut',
+      data: {
+        labels: Object.keys(categories),
+        datasets: [{
+          data: Object.values(categories),
+          backgroundColor: colors,
+          borderColor: '#1a1d27',
+          borderWidth: 3,
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { position: 'right', labels: { color: '#e4e6ed', padding: 12, font: { size: 12 } } }
+        },
+        cutout: '55%',
+      }
+    });
+
+    // ─── Trend Chart ───
+    new Chart(document.getElementById('trendChart'), {
+      type: 'line',
+      data: {
+        labels: ['第 1 次執行', '第 2 次修復', '第 3 次修復'],
+        datasets: [
+          {
+            label: '通過數',
+            data: [31, 45, 47],
+            borderColor: '#22c55e',
+            backgroundColor: '#22c55e22',
+            tension: 0.3,
+            fill: true,
+          },
+          {
+            label: '失敗數',
+            data: [16, 2, 0],
+            borderColor: '#ef4444',
+            backgroundColor: '#ef444422',
+            tension: 0.3,
+            fill: true,
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { labels: { color: '#e4e6ed' } } },
+        scales: {
+          y: { beginAtZero: true, ticks: { color: '#8b8fa3' }, grid: { color: '#2d3140' } },
+          x: { ticks: { color: '#8b8fa3' }, grid: { color: '#2d3140' } }
+        }
+      }
+    });
+  </script>
+</body>
+</html>

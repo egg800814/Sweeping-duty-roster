@@ -1,0 +1,491 @@
+﻿============================= test session starts =============================
+platform win32 -- Python 3.13.5, pytest-9.0.2, pluggy-1.6.0 -- C:\Users\User\Documents\MDIT\program\Sweeping-duty-roster\Sweeping-duty-roster\.venv\Scripts\python.exe
+cachedir: .pytest_cache
+rootdir: C:\Users\User\Documents\MDIT\program\Sweeping-duty-roster\Sweeping-duty-roster
+plugins: locust-2.43.3, base-url-2.1.0, playwright-0.7.2
+collecting ... collected 47 items
+
+tests/test_index.py::TestIndexPage::test_portal_cards_rendered PASSED    [  2%]
+tests/test_index.py::TestIndexPage::test_viewer_link PASSED              [  4%]
+tests/test_index.py::TestIndexPage::test_setup_link PASSED               [  6%]
+tests/test_index.py::TestIndexPage::test_admin_badge PASSED              [  8%]
+tests/test_index.py::TestIndexPage::test_title PASSED                    [ 10%]
+tests/test_index.py::TestIndexPage::test_planner_info_display PASSED     [ 12%]
+tests/test_setup_area.py::TestAreaAdd::test_add_area_success FAILED      [ 14%]
+tests/test_setup_area.py::TestAreaAdd::test_add_area_empty_name FAILED   [ 17%]
+tests/test_setup_area.py::TestAreaAdd::test_add_area_with_holiday_boost FAILED [ 19%]
+tests/test_setup_area.py::TestAreaAdd::test_add_area_cancel PASSED       [ 21%]
+tests/test_setup_area.py::TestAreaEdit::test_edit_area_name FAILED       [ 23%]
+tests/test_setup_area.py::TestAreaEdit::test_edit_area_priority FAILED   [ 25%]
+tests/test_setup_area.py::TestAreaDelete::test_delete_area_confirm FAILED [ 27%]
+tests/test_setup_area.py::TestAreaDelete::test_delete_area_cancel PASSED [ 29%]
+tests/test_setup_schedule.py::TestScheduleTab::test_date_defaults_to_today FAILED [ 31%]
+tests/test_setup_schedule.py::TestScheduleTab::test_today_button FAILED  [ 34%]
+tests/test_setup_schedule.py::TestScheduleTab::test_select_all_staff PASSED [ 36%]
+tests/test_setup_schedule.py::TestScheduleTab::test_deselect_all_staff PASSED [ 38%]
+tests/test_setup_schedule.py::TestScheduleTab::test_select_default_staff PASSED [ 40%]
+tests/test_setup_schedule.py::TestScheduleTab::test_gender_count PASSED  [ 42%]
+tests/test_setup_schedule.py::TestScheduleTab::test_generate_no_staff_selected FAILED [ 44%]
+tests/test_setup_schedule.py::TestScheduleTab::test_generate_schedule_success PASSED [ 46%]
+tests/test_setup_schedule.py::TestScheduleTab::test_save_schedule FAILED [ 48%]
+tests/test_setup_schedule.py::TestScheduleTab::test_holiday_toggle PASSED [ 51%]
+tests/test_setup_schedule.py::TestScheduleTab::test_planner_banner_displayed PASSED [ 53%]
+tests/test_setup_schedule.py::TestRotationTab::test_rotation_list_rendered PASSED [ 55%]
+tests/test_setup_schedule.py::TestRotationTab::test_rotation_has_current_badge PASSED [ 57%]
+tests/test_setup_schedule.py::TestRotationTab::test_advance_week PASSED  [ 59%]
+tests/test_setup_schedule.py::TestSettingsTab::test_gas_url_displayed PASSED [ 61%]
+tests/test_setup_schedule.py::TestSettingsTab::test_gas_url_invalid_format PASSED [ 63%]
+tests/test_setup_schedule.py::TestSettingsTab::test_gas_url_reset FAILED [ 65%]
+tests/test_setup_schedule.py::TestSettingsTab::test_export_json PASSED   [ 68%]
+tests/test_setup_staff.py::TestStaffAdd::test_add_staff_success FAILED   [ 70%]
+tests/test_setup_staff.py::TestStaffAdd::test_add_staff_empty_name FAILED [ 72%]
+tests/test_setup_staff.py::TestStaffAdd::test_add_staff_with_floor_restriction FAILED [ 74%]
+tests/test_setup_staff.py::TestStaffAdd::test_add_staff_cancel PASSED    [ 76%]
+tests/test_setup_staff.py::TestStaffEdit::test_edit_staff_name FAILED    [ 78%]
+tests/test_setup_staff.py::TestStaffDelete::test_delete_staff_confirm FAILED [ 80%]
+tests/test_setup_staff.py::TestStaffDelete::test_delete_staff_cancel PASSED [ 82%]
+tests/test_viewer.py::TestViewerLoad::test_load_with_data PASSED         [ 85%]
+tests/test_viewer.py::TestViewerLoad::test_load_empty_data PASSED        [ 87%]
+tests/test_viewer.py::TestViewerLoad::test_load_api_failure PASSED       [ 89%]
+tests/test_viewer.py::TestViewerConfirmButton::test_confirm_success PASSED [ 91%]
+tests/test_viewer.py::TestViewerConfirmButton::test_confirm_failure PASSED [ 93%]
+tests/test_viewer.py::TestViewerConfirmButton::test_already_confirmed_disabled PASSED [ 95%]
+tests/test_viewer.py::TestViewerSpecialCards::test_unassigned_area_card PASSED [ 97%]
+tests/test_viewer.py::TestViewerSpecialCards::test_gender_badge_on_buttons PASSED [100%]
+
+================================== FAILURES ===================================
+______________________ TestAreaAdd.test_add_area_success ______________________
+tests\test_setup_area.py:29: in test_add_area_success
+    page.click('button:has-text("新增")')
+.venv\Lib\site-packages\playwright\sync_api\_generated.py:9962: in click
+    self._sync(
+.venv\Lib\site-packages\playwright\_impl\_page.py:854: in click
+    return await self._main_frame._click(**locals_to_params(locals()))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\playwright\_impl\_frame.py:566: in _click
+    await self._channel.send("click", self._timeout, locals_to_params(locals()))
+.venv\Lib\site-packages\playwright\_impl\_connection.py:69: in send
+    return await self._connection.wrap_api_call(
+.venv\Lib\site-packages\playwright\_impl\_connection.py:559: in wrap_api_call
+    raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+E   playwright._impl._errors.TimeoutError: Page.click: Timeout 30000ms exceeded.
+E   Call log:
+E     - waiting for locator("button:has-text(\"新增\")")
+E       - locator resolved to 3 elements. Proceeding with the first one: <button id="addStaffBtn" class="btn btn-primary btn-sm">＋ 新增人員</button>
+E     - attempting click action
+E       2 × waiting for element to be visible, enabled and stable
+E         - element is not visible
+E       - retrying click action
+E       - waiting 20ms
+E       2 × waiting for element to be visible, enabled and stable
+E         - element is not visible
+E       - retrying click action
+E         - waiting 100ms
+E       56 × waiting for element to be visible, enabled and stable
+E          - element is not visible
+E        - retrying click action
+E          - waiting 500ms
+____________________ TestAreaAdd.test_add_area_empty_name _____________________
+tests\test_setup_area.py:47: in test_add_area_empty_name
+    page.click('button:has-text("新增")')
+.venv\Lib\site-packages\playwright\sync_api\_generated.py:9962: in click
+    self._sync(
+.venv\Lib\site-packages\playwright\_impl\_page.py:854: in click
+    return await self._main_frame._click(**locals_to_params(locals()))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\playwright\_impl\_frame.py:566: in _click
+    await self._channel.send("click", self._timeout, locals_to_params(locals()))
+.venv\Lib\site-packages\playwright\_impl\_connection.py:69: in send
+    return await self._connection.wrap_api_call(
+.venv\Lib\site-packages\playwright\_impl\_connection.py:559: in wrap_api_call
+    raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+E   playwright._impl._errors.TimeoutError: Page.click: Timeout 30000ms exceeded.
+E   Call log:
+E     - waiting for locator("button:has-text(\"新增\")")
+E       - locator resolved to 3 elements. Proceeding with the first one: <button id="addStaffBtn" class="btn btn-primary btn-sm">＋ 新增人員</button>
+E     - attempting click action
+E       2 × waiting for element to be visible, enabled and stable
+E         - element is not visible
+E       - retrying click action
+E       - waiting 20ms
+E       2 × waiting for element to be visible, enabled and stable
+E         - element is not visible
+E       - retrying click action
+E         - waiting 100ms
+E       57 × waiting for element to be visible, enabled and stable
+E          - element is not visible
+E        - retrying click action
+E          - waiting 500ms
+________________ TestAreaAdd.test_add_area_with_holiday_boost _________________
+tests\test_setup_area.py:65: in test_add_area_with_holiday_boost
+    page.click('button:has-text("新增")')
+.venv\Lib\site-packages\playwright\sync_api\_generated.py:9962: in click
+    self._sync(
+.venv\Lib\site-packages\playwright\_impl\_page.py:854: in click
+    return await self._main_frame._click(**locals_to_params(locals()))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\playwright\_impl\_frame.py:566: in _click
+    await self._channel.send("click", self._timeout, locals_to_params(locals()))
+.venv\Lib\site-packages\playwright\_impl\_connection.py:69: in send
+    return await self._connection.wrap_api_call(
+.venv\Lib\site-packages\playwright\_impl\_connection.py:559: in wrap_api_call
+    raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+E   playwright._impl._errors.TimeoutError: Page.click: Timeout 30000ms exceeded.
+E   Call log:
+E     - waiting for locator("button:has-text(\"新增\")")
+E       - locator resolved to 3 elements. Proceeding with the first one: <button id="addStaffBtn" class="btn btn-primary btn-sm">＋ 新增人員</button>
+E     - attempting click action
+E       2 × waiting for element to be visible, enabled and stable
+E         - element is not visible
+E       - retrying click action
+E       - waiting 20ms
+E       2 × waiting for element to be visible, enabled and stable
+E         - element is not visible
+E       - retrying click action
+E         - waiting 100ms
+E       57 × waiting for element to be visible, enabled and stable
+E          - element is not visible
+E        - retrying click action
+E          - waiting 500ms
+______________________ TestAreaEdit.test_edit_area_name _______________________
+tests\test_setup_area.py:101: in test_edit_area_name
+    page.click('button:has-text("儲存")')
+.venv\Lib\site-packages\playwright\sync_api\_generated.py:9962: in click
+    self._sync(
+.venv\Lib\site-packages\playwright\_impl\_page.py:854: in click
+    return await self._main_frame._click(**locals_to_params(locals()))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\playwright\_impl\_frame.py:566: in _click
+    await self._channel.send("click", self._timeout, locals_to_params(locals()))
+.venv\Lib\site-packages\playwright\_impl\_connection.py:69: in send
+    return await self._connection.wrap_api_call(
+.venv\Lib\site-packages\playwright\_impl\_connection.py:559: in wrap_api_call
+    raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+E   playwright._impl._errors.TimeoutError: Page.click: Timeout 30000ms exceeded.
+E   Call log:
+E     - waiting for locator("button:has-text(\"儲存\")")
+E       - locator resolved to 3 elements. Proceeding with the first one: <button id="saveScheduleBtn" class="btn btn-success btn-sm">\U0001f4be \u5132\u5b58\u6392\u73ed</button>
+E     - attempting click action
+E       2 × waiting for element to be visible, enabled and stable
+E         - element is not visible
+E       - retrying click action
+E       - waiting 20ms
+E       2 × waiting for element to be visible, enabled and stable
+E         - element is not visible
+E       - retrying click action
+E         - waiting 100ms
+E       56 × waiting for element to be visible, enabled and stable
+E          - element is not visible
+E        - retrying click action
+E          - waiting 500ms
+____________________ TestAreaEdit.test_edit_area_priority _____________________
+tests\test_setup_area.py:124: in test_edit_area_priority
+    page.click('button:has-text("儲存")')
+.venv\Lib\site-packages\playwright\sync_api\_generated.py:9962: in click
+    self._sync(
+.venv\Lib\site-packages\playwright\_impl\_page.py:854: in click
+    return await self._main_frame._click(**locals_to_params(locals()))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\playwright\_impl\_frame.py:566: in _click
+    await self._channel.send("click", self._timeout, locals_to_params(locals()))
+.venv\Lib\site-packages\playwright\_impl\_connection.py:69: in send
+    return await self._connection.wrap_api_call(
+.venv\Lib\site-packages\playwright\_impl\_connection.py:559: in wrap_api_call
+    raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+E   playwright._impl._errors.TimeoutError: Page.click: Timeout 30000ms exceeded.
+E   Call log:
+E     - waiting for locator("button:has-text(\"儲存\")")
+E       - locator resolved to 3 elements. Proceeding with the first one: <button id="saveScheduleBtn" class="btn btn-success btn-sm">\U0001f4be \u5132\u5b58\u6392\u73ed</button>
+E     - attempting click action
+E       2 × waiting for element to be visible, enabled and stable
+E         - element is not visible
+E       - retrying click action
+E       - waiting 20ms
+E       2 × waiting for element to be visible, enabled and stable
+E         - element is not visible
+E       - retrying click action
+E         - waiting 100ms
+E       57 × waiting for element to be visible, enabled and stable
+E          - element is not visible
+E        - retrying click action
+E          - waiting 500ms
+___________________ TestAreaDelete.test_delete_area_confirm ___________________
+tests\test_setup_area.py:142: in test_delete_area_confirm
+    page.click('button:has-text("新增")')
+.venv\Lib\site-packages\playwright\sync_api\_generated.py:9962: in click
+    self._sync(
+.venv\Lib\site-packages\playwright\_impl\_page.py:854: in click
+    return await self._main_frame._click(**locals_to_params(locals()))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\playwright\_impl\_frame.py:566: in _click
+    await self._channel.send("click", self._timeout, locals_to_params(locals()))
+.venv\Lib\site-packages\playwright\_impl\_connection.py:69: in send
+    return await self._connection.wrap_api_call(
+.venv\Lib\site-packages\playwright\_impl\_connection.py:559: in wrap_api_call
+    raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+E   playwright._impl._errors.TimeoutError: Page.click: Timeout 30000ms exceeded.
+E   Call log:
+E     - waiting for locator("button:has-text(\"新增\")")
+E       - locator resolved to 3 elements. Proceeding with the first one: <button id="addStaffBtn" class="btn btn-primary btn-sm">＋ 新增人員</button>
+E     - attempting click action
+E       2 × waiting for element to be visible, enabled and stable
+E         - element is not visible
+E       - retrying click action
+E       - waiting 20ms
+E       2 × waiting for element to be visible, enabled and stable
+E         - element is not visible
+E       - retrying click action
+E         - waiting 100ms
+E       57 × waiting for element to be visible, enabled and stable
+E          - element is not visible
+E        - retrying click action
+E          - waiting 500ms
+_________________ TestScheduleTab.test_date_defaults_to_today _________________
+tests\test_setup_schedule.py:17: in test_date_defaults_to_today
+    assert page.input_value("#scheduleDate") == today
+E   AssertionError: assert '2026-03-16' == '2026-03-17'
+E     
+E     - 2026-03-17
+E     ?          ^
+E     + 2026-03-16
+E     ?          ^
+______________________ TestScheduleTab.test_today_button ______________________
+tests\test_setup_schedule.py:27: in test_today_button
+    assert page.input_value("#scheduleDate") == date.today().isoformat()
+E   AssertionError: assert '2026-03-16' == '2026-03-17'
+E     
+E     - 2026-03-17
+E     ?          ^
+E     + 2026-03-16
+E     ?          ^
+_______________ TestScheduleTab.test_generate_no_staff_selected _______________
+tests\test_setup_schedule.py:87: in test_generate_no_staff_selected
+    assert "請先勾選" in toast
+E   AssertionError: assert '請先勾選' in '成功從雲端載入 24 位人員勾選狀態。'
+_____________________ TestScheduleTab.test_save_schedule ______________________
+tests\test_setup_schedule.py:131: in test_save_schedule
+    assert "已儲存" in toast
+E   AssertionError: assert '已儲存' in '成功從雲端載入 24 位人員勾選狀態。'
+_____________________ TestSettingsTab.test_gas_url_reset ______________________
+tests\test_setup_schedule.py:220: in test_gas_url_reset
+    assert "重設" in toast
+E   AssertionError: assert '重設' in '成功從雲端載入 24 位人員勾選狀態。'
+_____________________ TestStaffAdd.test_add_staff_success _____________________
+tests\test_setup_staff.py:32: in test_add_staff_success
+    page.click('button:has-text("新增")')
+.venv\Lib\site-packages\playwright\sync_api\_generated.py:9962: in click
+    self._sync(
+.venv\Lib\site-packages\playwright\_impl\_page.py:854: in click
+    return await self._main_frame._click(**locals_to_params(locals()))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\playwright\_impl\_frame.py:566: in _click
+    await self._channel.send("click", self._timeout, locals_to_params(locals()))
+.venv\Lib\site-packages\playwright\_impl\_connection.py:69: in send
+    return await self._connection.wrap_api_call(
+.venv\Lib\site-packages\playwright\_impl\_connection.py:559: in wrap_api_call
+    raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+E   playwright._impl._errors.TimeoutError: Page.click: Timeout 30000ms exceeded.
+E   Call log:
+E     - waiting for locator("button:has-text(\"新增\")")
+E       - locator resolved to 3 elements. Proceeding with the first one: <button id="addStaffBtn" class="btn btn-primary btn-sm">＋ 新增人員</button>
+E     - attempting click action
+E       - waiting for element to be visible, enabled and stable
+E       - element is not stable
+E     - retrying click action
+E       - waiting for element to be visible, enabled and stable
+E       - element is visible, enabled and stable
+E       - scrolling into view if needed
+E       - done scrolling
+E       - <div id="modalOverlay" class="modal-overlay active">…</div> intercepts pointer events
+E     - retrying click action
+E       - waiting 20ms
+E       2 × waiting for element to be visible, enabled and stable
+E         - element is visible, enabled and stable
+E         - scrolling into view if needed
+E         - done scrolling
+E         - <div id="modalOverlay" class="modal-overlay active">…</div> intercepts pointer events
+E       - retrying click action
+E         - waiting 100ms
+E       - waiting for element to be visible, enabled and stable
+E       - element is not stable
+E     55 × retrying click action
+E          - waiting 500ms
+E          - waiting for element to be visible, enabled and stable
+E          - element is visible, enabled and stable
+E          - scrolling into view if needed
+E          - done scrolling
+E          - <div id="modalOverlay" class="modal-overlay active">…</div> intercepts pointer events
+E     - retrying click action
+E       - waiting 500ms
+___________________ TestStaffAdd.test_add_staff_empty_name ____________________
+tests\test_setup_staff.py:58: in test_add_staff_empty_name
+    page.click('button:has-text("新增")')
+.venv\Lib\site-packages\playwright\sync_api\_generated.py:9962: in click
+    self._sync(
+.venv\Lib\site-packages\playwright\_impl\_page.py:854: in click
+    return await self._main_frame._click(**locals_to_params(locals()))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\playwright\_impl\_frame.py:566: in _click
+    await self._channel.send("click", self._timeout, locals_to_params(locals()))
+.venv\Lib\site-packages\playwright\_impl\_connection.py:69: in send
+    return await self._connection.wrap_api_call(
+.venv\Lib\site-packages\playwright\_impl\_connection.py:559: in wrap_api_call
+    raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+E   playwright._impl._errors.TimeoutError: Page.click: Timeout 30000ms exceeded.
+E   Call log:
+E     - waiting for locator("button:has-text(\"新增\")")
+E       - locator resolved to 3 elements. Proceeding with the first one: <button id="addStaffBtn" class="btn btn-primary btn-sm">＋ 新增人員</button>
+E     - attempting click action
+E       2 × waiting for element to be visible, enabled and stable
+E         - element is not stable
+E       - retrying click action
+E       - waiting 20ms
+E       2 × waiting for element to be visible, enabled and stable
+E         - element is visible, enabled and stable
+E         - scrolling into view if needed
+E         - done scrolling
+E         - <div id="modalOverlay" class="modal-overlay active">…</div> intercepts pointer events
+E       - retrying click action
+E         - waiting 100ms
+E       - waiting for element to be visible, enabled and stable
+E       - element is not stable
+E     55 × retrying click action
+E          - waiting 500ms
+E          - waiting for element to be visible, enabled and stable
+E          - element is visible, enabled and stable
+E          - scrolling into view if needed
+E          - done scrolling
+E          - <div id="modalOverlay" class="modal-overlay active">…</div> intercepts pointer events
+E     - retrying click action
+E       - waiting 500ms
+_____________ TestStaffAdd.test_add_staff_with_floor_restriction ______________
+tests\test_setup_staff.py:77: in test_add_staff_with_floor_restriction
+    page.click('button:has-text("新增")')
+.venv\Lib\site-packages\playwright\sync_api\_generated.py:9962: in click
+    self._sync(
+.venv\Lib\site-packages\playwright\_impl\_page.py:854: in click
+    return await self._main_frame._click(**locals_to_params(locals()))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\playwright\_impl\_frame.py:566: in _click
+    await self._channel.send("click", self._timeout, locals_to_params(locals()))
+.venv\Lib\site-packages\playwright\_impl\_connection.py:69: in send
+    return await self._connection.wrap_api_call(
+.venv\Lib\site-packages\playwright\_impl\_connection.py:559: in wrap_api_call
+    raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+E   playwright._impl._errors.TimeoutError: Page.click: Timeout 30000ms exceeded.
+E   Call log:
+E     - waiting for locator("button:has-text(\"新增\")")
+E       - locator resolved to 3 elements. Proceeding with the first one: <button id="addStaffBtn" class="btn btn-primary btn-sm">＋ 新增人員</button>
+E     - attempting click action
+E       2 × waiting for element to be visible, enabled and stable
+E         - element is not stable
+E       - retrying click action
+E       - waiting 20ms
+E       2 × waiting for element to be visible, enabled and stable
+E         - element is visible, enabled and stable
+E         - scrolling into view if needed
+E         - done scrolling
+E         - <div id="modalOverlay" class="modal-overlay active">…</div> intercepts pointer events
+E       - retrying click action
+E         - waiting 100ms
+E       - waiting for element to be visible, enabled and stable
+E       - element is not stable
+E     56 × retrying click action
+E          - waiting 500ms
+E          - waiting for element to be visible, enabled and stable
+E          - element is visible, enabled and stable
+E          - scrolling into view if needed
+E          - done scrolling
+E          - <div id="modalOverlay" class="modal-overlay active">…</div> intercepts pointer events
+E     - retrying click action
+E       - waiting 500ms
+_____________________ TestStaffEdit.test_edit_staff_name ______________________
+tests\test_setup_staff.py:123: in test_edit_staff_name
+    page.click('button:has-text("儲存")')
+.venv\Lib\site-packages\playwright\sync_api\_generated.py:9962: in click
+    self._sync(
+.venv\Lib\site-packages\playwright\_impl\_page.py:854: in click
+    return await self._main_frame._click(**locals_to_params(locals()))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\playwright\_impl\_frame.py:566: in _click
+    await self._channel.send("click", self._timeout, locals_to_params(locals()))
+.venv\Lib\site-packages\playwright\_impl\_connection.py:69: in send
+    return await self._connection.wrap_api_call(
+.venv\Lib\site-packages\playwright\_impl\_connection.py:559: in wrap_api_call
+    raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+E   playwright._impl._errors.TimeoutError: Page.click: Timeout 30000ms exceeded.
+E   Call log:
+E     - waiting for locator("button:has-text(\"儲存\")")
+E       - locator resolved to 3 elements. Proceeding with the first one: <button id="saveScheduleBtn" class="btn btn-success btn-sm">\U0001f4be \u5132\u5b58\u6392\u73ed</button>
+E     - attempting click action
+E       2 × waiting for element to be visible, enabled and stable
+E         - element is not visible
+E       - retrying click action
+E       - waiting 20ms
+E       2 × waiting for element to be visible, enabled and stable
+E         - element is not visible
+E       - retrying click action
+E         - waiting 100ms
+E       57 × waiting for element to be visible, enabled and stable
+E          - element is not visible
+E        - retrying click action
+E          - waiting 500ms
+__________________ TestStaffDelete.test_delete_staff_confirm __________________
+tests\test_setup_staff.py:150: in test_delete_staff_confirm
+    page.click('button:has-text("新增")')
+.venv\Lib\site-packages\playwright\sync_api\_generated.py:9962: in click
+    self._sync(
+.venv\Lib\site-packages\playwright\_impl\_page.py:854: in click
+    return await self._main_frame._click(**locals_to_params(locals()))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\playwright\_impl\_frame.py:566: in _click
+    await self._channel.send("click", self._timeout, locals_to_params(locals()))
+.venv\Lib\site-packages\playwright\_impl\_connection.py:69: in send
+    return await self._connection.wrap_api_call(
+.venv\Lib\site-packages\playwright\_impl\_connection.py:559: in wrap_api_call
+    raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+E   playwright._impl._errors.TimeoutError: Page.click: Timeout 30000ms exceeded.
+E   Call log:
+E     - waiting for locator("button:has-text(\"新增\")")
+E       - locator resolved to 3 elements. Proceeding with the first one: <button id="addStaffBtn" class="btn btn-primary btn-sm">＋ 新增人員</button>
+E     - attempting click action
+E       2 × waiting for element to be visible, enabled and stable
+E         - element is not stable
+E       - retrying click action
+E       - waiting 20ms
+E       2 × waiting for element to be visible, enabled and stable
+E         - element is visible, enabled and stable
+E         - scrolling into view if needed
+E         - done scrolling
+E         - <div id="modalOverlay" class="modal-overlay active">…</div> intercepts pointer events
+E       - retrying click action
+E         - waiting 100ms
+E       - waiting for element to be visible, enabled and stable
+E       - element is not stable
+E     56 × retrying click action
+E          - waiting 500ms
+E          - waiting for element to be visible, enabled and stable
+E          - element is visible, enabled and stable
+E          - scrolling into view if needed
+E          - done scrolling
+E          - <div id="modalOverlay" class="modal-overlay active">…</div> intercepts pointer events
+E     - retrying click action
+E       - waiting 500ms
+=========================== short test summary info ===========================
+FAILED tests/test_setup_area.py::TestAreaAdd::test_add_area_success - playwri...
+FAILED tests/test_setup_area.py::TestAreaAdd::test_add_area_empty_name - play...
+FAILED tests/test_setup_area.py::TestAreaAdd::test_add_area_with_holiday_boost
+FAILED tests/test_setup_area.py::TestAreaEdit::test_edit_area_name - playwrig...
+FAILED tests/test_setup_area.py::TestAreaEdit::test_edit_area_priority - play...
+FAILED tests/test_setup_area.py::TestAreaDelete::test_delete_area_confirm - p...
+FAILED tests/test_setup_schedule.py::TestScheduleTab::test_date_defaults_to_today
+FAILED tests/test_setup_schedule.py::TestScheduleTab::test_today_button - Ass...
+FAILED tests/test_setup_schedule.py::TestScheduleTab::test_generate_no_staff_selected
+FAILED tests/test_setup_schedule.py::TestScheduleTab::test_save_schedule - As...
+FAILED tests/test_setup_schedule.py::TestSettingsTab::test_gas_url_reset - As...
+FAILED tests/test_setup_staff.py::TestStaffAdd::test_add_staff_success - play...
+FAILED tests/test_setup_staff.py::TestStaffAdd::test_add_staff_empty_name - p...
+FAILED tests/test_setup_staff.py::TestStaffAdd::test_add_staff_with_floor_restriction
+FAILED tests/test_setup_staff.py::TestStaffEdit::test_edit_staff_name - playw...
+FAILED tests/test_setup_staff.py::TestStaffDelete::test_delete_staff_confirm
+================== 16 failed, 31 passed in 616.58s (0:10:16) ==================

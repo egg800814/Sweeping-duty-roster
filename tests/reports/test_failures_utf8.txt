@@ -1,0 +1,34 @@
+﻿============================= test session starts =============================
+platform win32 -- Python 3.13.5, pytest-9.0.2, pluggy-1.6.0 -- C:\Users\User\Documents\MDIT\program\Sweeping-duty-roster\Sweeping-duty-roster\.venv\Scripts\python.exe
+cachedir: .pytest_cache
+rootdir: C:\Users\User\Documents\MDIT\program\Sweeping-duty-roster\Sweeping-duty-roster
+plugins: locust-2.43.3, base-url-2.1.0, playwright-0.7.2
+collecting ... collected 47 items / 45 deselected / 2 selected
+run-last-failure: rerun previous 2 failures
+
+tests/test_setup_schedule.py::TestScheduleTab::test_date_defaults_to_today FAILED [ 50%]
+tests/test_setup_schedule.py::TestScheduleTab::test_today_button FAILED  [100%]
+
+================================== FAILURES ===================================
+_________________ TestScheduleTab.test_date_defaults_to_today _________________
+tests\test_setup_schedule.py:17: in test_date_defaults_to_today
+    assert page.input_value("#scheduleDate") == expected_date
+E   AssertionError: assert '2026-03-16' == '2026-03-17'
+E     
+E     - 2026-03-17
+E     ?          ^
+E     + 2026-03-16
+E     ?          ^
+______________________ TestScheduleTab.test_today_button ______________________
+tests\test_setup_schedule.py:28: in test_today_button
+    assert page.input_value("#scheduleDate") == expected_date
+E   AssertionError: assert '2026-03-16' == '2026-03-17'
+E     
+E     - 2026-03-17
+E     ?          ^
+E     + 2026-03-16
+E     ?          ^
+=========================== short test summary info ===========================
+FAILED tests/test_setup_schedule.py::TestScheduleTab::test_date_defaults_to_today
+FAILED tests/test_setup_schedule.py::TestScheduleTab::test_today_button - Ass...
+====================== 2 failed, 45 deselected in 14.01s ======================
