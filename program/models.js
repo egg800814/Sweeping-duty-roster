@@ -1,3 +1,17 @@
+/*
+ * 【models.js】
+ * 資料模型與 localStorage 存取層。
+ * 定義系統版本號、儲存鍵值常數、UUID 產生器，
+ * 以及所有 CRUD 模型物件：
+ *   - StaffModel：人員的新增、查詢、更新、刪除
+ *   - AreaModel：清掃區域的管理
+ *   - PlannerModel：每週負責人輪值資料的讀寫與自動日期推算
+ *   - ScheduleModel：每日排班紀錄的儲存與查詢
+ *   - HistoryModel：歷史指派次數與近期區域的統計
+ * 最後提供 initializeDefaultData()，在啟動時強制從
+ * ../data/data.json 同步最新共用設定至 localStorage。
+ */
+
 // program/models.js — 資料模型與 localStorage 存取層
 
 const DATA_VERSION = 10.1; // v10.1: 加入自動輪值與順序調整機制
