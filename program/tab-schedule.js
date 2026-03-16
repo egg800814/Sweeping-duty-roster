@@ -328,6 +328,25 @@ async function loadAttendanceFromGAS() {
         document.getElementById('saveScheduleBtn').style.display = '';
         document.getElementById('printBtn').style.display = '';
         document.getElementById('addLateBtn').style.display = '';
+
+        // 立即從雲端回傳的 status 資料套用確認標記
+        assignments.forEach(a => {
+          const names = a.staffNames ? String(a.staffNames).split(/[,、，]/).map(n => n.trim()).filter(Boolean) : [];
+          const statuses = [a.status1, a.status2, a.status3, a.status4];
+          let chipIdx = 0;
+          names.forEach((name, nameIdx) => {
+            if (staffNameMap[name]) {
+              if (statuses[nameIdx] === '已確認') {
+                const chip = document.querySelector(`.staff-chip[data-area-id="${a.areaCode}"][data-person-index="${chipIdx}"]`);
+                if (chip) {
+                  chip.classList.add('confirmed');
+                  chip.dataset.confirmed = 'true';
+                }
+              }
+              chipIdx++;
+            }
+          });
+        });
       }
     }
 
@@ -550,23 +569,44 @@ let lastStatusCache = '';
 let statusPollingTimer = null;
 
 async function fetchConfirmStatuses() {
-  if (typeof GAS_API_URL === 'undefined' || !GAS_API_URL || GAS_API_URL === 'YOUR_GAS_API_URL_HERE') return;
+  // 1. 基本檢查：如果網址還沒設定好，5秒後再來問
+  if (typeof GAS_API_URL === 'undefined' || !GAS_API_URL || GAS_API_URL === 'YOUR_GAS_API_URL_HERE') {
+    if (statusPollingTimer) clearTimeout(statusPollingTimer);
+    statusPollingTimer = setTimeout(fetchConfirmStatuses, 5000);
+    return;
+  }
 
   try {
-    const res = await fetch(GAS_API_URL);
-    const data = await res.json();
-    if (!Array.isArray(data)) return;
+    const urlObj = new URL(GAS_API_URL);
+    
+    // 🌟 修正 A：加上跟手動按鈕一樣的查詢參數
+    urlObj.searchParams.set("type", "admin");
+    
+    // 🌟 修正 B：加入時間戳，強迫瀏覽器每次都去雲端抓最新資料，破解 Cache 地雷
+    urlObj.searchParams.set("t", Date.now());
 
+    const res = await fetch(urlObj.toString());
+    const result = await res.json();
+    
+    // 🌟 修正 C：跟手動按鈕一樣，精準取出 assignments 陣列
+    const data = result.assignments || []; 
+    
+    // 如果資料是空的，跳出 try，去執行 finally 的計時器
+    if (!Array.isArray(data) || data.length === 0) return;
+
+    // 將資料轉成字串，用來比對是不是跟上次長得一模一樣
     const currentStatusStr = JSON.stringify(data.map(r => ({ c: r.areaCode, s: [r.status1, r.status2, r.status3, r.status4] })));
 
+    // 如果資料跟上次緩存一樣，就跳過不重新渲染畫面
     if (currentStatusStr === lastStatusCache) return;
+    
     lastStatusCache = currentStatusStr;
-
     const statusMap = {};
     data.forEach(row => {
       statusMap[row.areaCode] = [row.status1, row.status2, row.status3, row.status4];
     });
 
+    // 掃描畫面上的所有人名標籤，比對雲端狀態
     document.querySelectorAll('.staff-chip[data-area-id]').forEach(chip => {
       const areaId = chip.dataset.areaId;
       const idx = parseInt(chip.dataset.personIndex || '0', 10);
@@ -588,8 +628,9 @@ async function fetchConfirmStatuses() {
   } catch (err) {
     console.warn('fetchConfirmStatuses 失敗:', err);
   } finally {
+    // 🌟 保證循環：無論成功或失敗，10 秒後再跑一次
     if (statusPollingTimer) clearTimeout(statusPollingTimer);
-    statusPollingTimer = setTimeout(fetchConfirmStatuses, 10000);
+    statusPollingTimer = setTimeout(fetchConfirmStatuses, 5000);
   }
 }
 

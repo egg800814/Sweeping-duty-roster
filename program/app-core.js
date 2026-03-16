@@ -18,7 +18,7 @@ let sessionOptionalAreaIds = null;  // 暫存目前的區域勾選
 
 // ─── Google Sheets 同步 ───
 let GAS_DEFAULT_URL = 'YOUR_GAS_API_URL_HERE';
-let GAS_API_URL = '';
+let GAS_API_URL = localStorage.getItem('gas_api_url') || '';
 
 // 定義 Debounce 同步函數，避免連續勾選造成大量請求
 let isSyncingFromCloud = false;
