@@ -24,9 +24,16 @@ const STORAGE_KEYS = {
   DATA_VER: 'cleaning_data_version',
 };
 
-// ─── UUID 產生器 ───
-function generateId() {
-  return 'id_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 8);
+// ─── 遞增 ID 產生器 ───
+function getNextIncrementalId(list, prefix) {
+  let maxNum = 0;
+  list.forEach(item => {
+    if (typeof item.id === 'string' && item.id.startsWith(prefix)) {
+      const num = parseInt(item.id.slice(prefix.length), 10);
+      if (!isNaN(num) && num > maxNum) maxNum = num;
+    }
+  });
+  return prefix + (maxNum + 1);
 }
 
 // ─── 通用 localStorage 操作 ───
@@ -60,7 +67,7 @@ const StaffModel = {
   add(staff) {
     const list = this.getAll();
     const newStaff = {
-      id: generateId(),
+      id: getNextIncrementalId(list, 's'),
       name: staff.name,
       gender: staff.gender || 'male',
       active: staff.active !== undefined ? staff.active : true,
@@ -72,6 +79,14 @@ const StaffModel = {
     };
     list.push(newStaff);
     saveData(STORAGE_KEYS.STAFF, list);
+
+    // 同步新增至輪值清單
+    const rot = PlannerModel.get();
+    if (!rot.planners.includes(newStaff.id)) {
+      rot.planners.push(newStaff.id);
+      PlannerModel.save(rot);
+    }
+
     return newStaff;
   },
 
@@ -87,6 +102,12 @@ const StaffModel = {
   remove(id) {
     const list = this.getAll().filter(s => s.id !== id);
     saveData(STORAGE_KEYS.STAFF, list);
+
+    // 同步從輪值清單移除
+    const rot = PlannerModel.get();
+    rot.planners = rot.planners.filter(pid => pid !== id);
+    if (rot.currentIndex >= rot.planners.length) rot.currentIndex = 0;
+    PlannerModel.save(rot);
   },
 
   save(list) {
@@ -107,7 +128,7 @@ const AreaModel = {
   add(area) {
     const list = this.getAll();
     const newArea = {
-      id: generateId(),
+      id: getNextIncrementalId(list, 'a'),
       name: area.name,
       priority: area.priority || 'daily',
       genderRestriction: area.genderRestriction || 'none',
