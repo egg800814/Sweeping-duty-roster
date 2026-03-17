@@ -111,7 +111,10 @@ async function initGasUrlSettings() {
         console.warn('無法從 data.json 讀取預設 URL', err);
     }
 
-    GAS_API_URL = localStorage.getItem('gas_api_url') || GAS_DEFAULT_URL;
+    // 修正：重新整理後一律強制以 data.json 為準，不使用舊的 localStorage 緩存
+    GAS_API_URL = GAS_DEFAULT_URL;
+    // 同步更新 localStorage，確保與 data.json 一致
+    localStorage.setItem('gas_api_url', GAS_API_URL);
 
     if (!input) return;
 
