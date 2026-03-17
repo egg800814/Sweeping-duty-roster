@@ -622,7 +622,7 @@ body {
   transition: all var(--transition);
   user-select: none;
   min-height: 58px;       /* 限制高度一致 */
-  min-width: 190px;       /* 寬度不限制，隨內容自動調整 */
+  min-width: 180px;       /* 寬度不限制，隨內容自動調整 */
   width: fit-content;     /* 核心：寬度隨內容自動調整 */
   white-space: normal;    /* 建議：內容過多時允許折行，或保持 nowrap 但要配合寬度 */
   flex-shrink: 0;         /* 避免在 flex 容器中被擠壓變形 */
@@ -630,15 +630,16 @@ body {
 
 /* 性別圓圈標籤預設樣式 */
 .gender-badge {
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  display: inline-flex;
+  display: inline-flex !important;
   align-items: center;
   justify-content: center;
-  font-size: 0.65rem;
-  margin-left: auto;
-  flex-shrink: 0;
+  white-space: nowrap !important; /* 核心：強制標籤內的「♂優先」不換行 */
+  padding: 2px 8px !important;
+  font-size: 0.75rem;
+  border-radius: 4px;
+  font-weight: 600;
+  flex-shrink: 0;               /* 核心：空間不足時標籤不准被擠壓 */
+  margin-left: 4px;
 }
 
 .gender-badge.male { background: rgba(96, 165, 250, 0.15); color: var(--male-color); }
@@ -775,13 +776,14 @@ body {
 
 .assignment-card {
   display: flex;
-  align-items: center;
+  align-items: center;      /* 確保內容垂直置中 */
+  justify-content: flex-start; /* 讓內容從左開始排 */
   padding: 14px 18px;
   background: var(--bg-input);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
   margin-bottom: 8px;
-  transition: all var(--transition);
+  overflow: visible;         /* 確保內容不會因為超出而被隱藏 */
 }
 
 .assignment-card:hover {
@@ -797,10 +799,13 @@ body {
 
 .assignment-area {
   font-weight: 700;
-  min-width: 120px;
-  display: flex;
+  display: flex !important;    /* 強制使用 Flex 佈局 */
+  flex-direction: row !important; /* 強制橫向排列 */
   align-items: center;
+  flex-wrap: nowrap !important; /* 絕對不准折行 */
   gap: 8px;
+  min-width: 140px;            /* 設定一個最小寬度 */
+  white-space: nowrap !important; /* 內部文字不換行 */
 }
 
 .assignment-area .priority-dot {
