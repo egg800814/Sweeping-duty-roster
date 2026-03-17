@@ -1,14 +1,21 @@
 /**
- * 整合版 Google Apps Script
- * 支援功能：
- * 1. doGet: 讀取今日排班資料 (前端確認系統使用)
- * 2. doPost:
- *    - 模式 A (assignments): 接收排班管理網頁傳入的新排班資料 (由 old.gs 整合而來)
- *    - 模式 B (areaCode): 接收個別人員的「已確認」狀態更新
- * 3. doOptions: 處理 CORS
+ * 【整合版 Google Apps Script - V13.0】
+ * 
+ * 本腳本為「打掃區域分配系統」的雲端後端，負責與 Google Sheets 試算表雙向同步資料。
+ * 
+ * 依賴工作表：
+ * 1. [Schedule]: 存放每日排班結果 (A-H 欄) 與今日負責人 (I1 儲存格)。
+ * 2. [StaffData]: 存放目前最新的出勤人員名冊 (姓名、性別)，供確認系統查詢性別用。
+ * 3. [Logs]: (選用) 紀錄系統同步紀錄。
+ * 
+ * 核心進入點：
+ * - doGet(e): 讀取排班資料。支援 ?type=admin 提供完整後台同步，或預設提供給確認系統顯示。
+ * - doPost(e): 寫入排班資料。模式 A (assignments) 為全量更新；模式 B (areaCode) 為單點行為確認。
+ * - doOptions(e): 處理預檢請求 (CORS PREFLIGHT)。
  */
 
 function doGet(e) {
+  // --- 1. 基本連結與參數初始化 ---
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var sheet = ss.getSheetByName("Schedule") || ss.getSheets()[0];
   var data = sheet.getDataRange().getValues();
@@ -37,9 +44,9 @@ function doGet(e) {
     // 若無此工作表則略過，不報錯
   }
 
-  // 2. 讀取 Schedule (今日排班區域)
+  // --- 3. 讀取 Schedule (過濾出今日的排班區域與狀態) ---
   var assignments = [];
-  var plannerName = String(sheet.getRange("I1").getValue() || "").trim();
+  var plannerName = String(sheet.getRange("I1").getValue() || "").trim(); // 從 I1 讀取今日負責人姓名
 
   for (var i = 1; i < data.length; i++) {
     var rowDate = data[i][0];
@@ -109,7 +116,10 @@ function doPost(e) {
   try {
     var params = JSON.parse(e.postData.contents);
 
-    // --- 模式 A：由管理頁面傳來的更新 (支援「全量更新」或「僅更新出勤名單」) ---
+    // =========================================================================
+    // 模式 A：由管理頁面傳來的「大規模全量同步」 (由 setup.html 觸發)
+    // 支援：1. 寫入全新排班、2. 更新人員名冊、3. 紀錄今日負責人
+    // =========================================================================
     if (
       params.assignments ||
       params.staffMeta ||
@@ -224,7 +234,10 @@ function doPost(e) {
       ).setMimeType(ContentService.MimeType.JSON);
     }
 
-    // --- 模式 B：由確認/移動/刪除 觸發的「單一區域操作」 ---
+    // =========================================================================
+    // 模式 B：由單一操作觸發的「局部狀態更新」 (由 viewer.html 或手動調整觸發)
+    // 支援：confirm (回報完成)、delete (移除人員)、move (移動人員)
+    // =========================================================================
     if (params.areaCode) {
       var data = sheet.getDataRange().getValues();
       var today = Utilities.formatDate(
