@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "exportedAt": "2026-03-13T13:02:15.874Z",
+  "exportedAt": "2026-03-17T03:12:15.605Z",
   "gasApiUrl": "https://script.google.com/macros/s/AKfycbylxdMoFwSyolG-xonnAUzz5Obzp-qruRMf2NpPajdoXmnvreja_4aVyj3fAZzVyOZm/exec",
   "staff": [
     {
@@ -312,6 +312,17 @@
       "floorRestriction": null,
       "excludeAreas": [],
       "department": "新事業部"
+    },
+    {
+      "id": "s29",
+      "name": "林淯雯",
+      "gender": "female",
+      "active": true,
+      "isDefault": true,
+      "role": "regular",
+      "floorRestriction": null,
+      "excludeAreas": [],
+      "department": "管理部"
     }
   ],
   "areas": [
@@ -500,6 +511,7 @@
       "s14",
       "s18",
       "s22",
+      "s29",
       "s10",
       "s13",
       "s19",
@@ -520,9 +532,9 @@
       "s25",
       "s26"
     ],
-    "currentIndex": 16,
-    "baseDate": "2026-03-13",
-    "baseIndex": 16
+    "currentIndex": 18,
+    "baseDate": "2026-03-17",
+    "baseIndex": 18
   },
   "schedules": []
 }
