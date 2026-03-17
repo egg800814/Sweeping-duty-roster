@@ -18,6 +18,8 @@ const DATA_VERSION = 12.0; // v12.0: 加入自動輪值與順序調整機制
 
 const STORAGE_KEYS = {
   STAFF: 'cleaning_staff',
+  DEPARTMENTS: 'cleaning_departments',
+  ROLES: 'cleaning_roles',
   AREAS: 'cleaning_areas',
   PLANNER: 'cleaning_planner_rotation',
   SCHEDULES: 'cleaning_schedules',
@@ -50,6 +52,88 @@ function saveData(key, data) {
   localStorage.setItem(key, JSON.stringify(data));
 }
 
+// ─── Department CRUD ───
+const DepartmentModel = {
+  getAll() {
+    return loadData(STORAGE_KEYS.DEPARTMENTS, []).sort((a, b) => a.sortOrder - b.sortOrder);
+  },
+
+  getById(id) {
+    return this.getAll().find(d => d.id === id) || null;
+  },
+
+  add(dept) {
+    const list = this.getAll();
+    const newDept = {
+      id: getNextIncrementalId(list, 'd'),
+      name: dept.name,
+      sortOrder: dept.sortOrder || list.length + 1,
+    };
+    list.push(newDept);
+    saveData(STORAGE_KEYS.DEPARTMENTS, list);
+    return newDept;
+  },
+
+  update(id, updates) {
+    const list = this.getAll();
+    const idx = list.findIndex(d => d.id === id);
+    if (idx === -1) return null;
+    list[idx] = { ...list[idx], ...updates };
+    saveData(STORAGE_KEYS.DEPARTMENTS, list);
+    return list[idx];
+  },
+
+  remove(id) {
+    const list = this.getAll().filter(d => d.id !== id);
+    saveData(STORAGE_KEYS.DEPARTMENTS, list);
+  },
+
+  save(list) {
+    saveData(STORAGE_KEYS.DEPARTMENTS, list);
+  },
+};
+
+// ─── Role CRUD ───
+const RoleModel = {
+  getAll() {
+    return loadData(STORAGE_KEYS.ROLES, []).sort((a, b) => a.weight - b.weight);
+  },
+
+  getById(id) {
+    return this.getAll().find(r => r.id === id) || null;
+  },
+
+  add(role) {
+    const list = this.getAll();
+    const newRole = {
+      id: getNextIncrementalId(list, 'r'),
+      name: role.name,
+      weight: role.weight || 99,
+    };
+    list.push(newRole);
+    saveData(STORAGE_KEYS.ROLES, list);
+    return newRole;
+  },
+
+  update(id, updates) {
+    const list = this.getAll();
+    const idx = list.findIndex(r => r.id === id);
+    if (idx === -1) return null;
+    list[idx] = { ...list[idx], ...updates };
+    saveData(STORAGE_KEYS.ROLES, list);
+    return list[idx];
+  },
+
+  remove(id) {
+    const list = this.getAll().filter(r => r.id !== id);
+    saveData(STORAGE_KEYS.ROLES, list);
+  },
+
+  save(list) {
+    saveData(STORAGE_KEYS.ROLES, list);
+  },
+};
+
 // ─── Staff CRUD ───
 const StaffModel = {
   getAll() {
@@ -72,17 +156,18 @@ const StaffModel = {
       gender: staff.gender || 'male',
       active: staff.active !== undefined ? staff.active : true,
       isDefault: staff.isDefault !== undefined ? staff.isDefault : true,
-      role: staff.role || 'regular',
+      isRotate: staff.isRotate !== undefined ? staff.isRotate : true,
+      roleId: staff.roleId || null,
+      departmentId: staff.departmentId || null,
       floorRestriction: staff.floorRestriction || null,
       excludeAreas: staff.excludeAreas || [],
-      department: staff.department || '未分類',
     };
     list.push(newStaff);
     saveData(STORAGE_KEYS.STAFF, list);
 
     // 同步新增至輪值清單
     const rot = PlannerModel.get();
-    if (!rot.planners.includes(newStaff.id)) {
+    if (newStaff.isRotate && !rot.planners.includes(newStaff.id)) {
       rot.planners.push(newStaff.id);
       PlannerModel.save(rot);
     }
@@ -94,8 +179,25 @@ const StaffModel = {
     const list = this.getAll();
     const idx = list.findIndex(s => s.id === id);
     if (idx === -1) return null;
+
+    const oldRotate = list[idx].isRotate !== false; // 若未定義視為 true
     list[idx] = { ...list[idx], ...updates };
+    const newRotate = list[idx].isRotate !== false;
+    
     saveData(STORAGE_KEYS.STAFF, list);
+
+    // 處理 isRotate 變更造成的輪值清單影響
+    if (oldRotate !== newRotate) {
+      const rot = PlannerModel.get();
+      if (newRotate && !rot.planners.includes(id)) {
+        rot.planners.push(id);
+      } else if (!newRotate && rot.planners.includes(id)) {
+        rot.planners = rot.planners.filter(pid => pid !== id);
+        if (rot.currentIndex >= rot.planners.length) rot.currentIndex = 0;
+      }
+      PlannerModel.save(rot);
+    }
+
     return list[idx];
   },
 
@@ -177,9 +279,16 @@ const PlannerModel = {
 
   getCurrentPlanner(presentStaffIds = null) {
     const rot = this.get();
-    if (rot.planners.length === 0) return null;
+    
+    // 確保輪值名單當下僅採用 `isRotate !== false` 且 active 的員工
+    const activePlanners = rot.planners.filter(pid => {
+        const s = StaffModel.getById(pid);
+        return s && s.active && s.isRotate !== false;
+    });
 
-    let idx = rot.currentIndex % rot.planners.length;
+    if (activePlanners.length === 0) return null;
+
+    let idx = rot.currentIndex % activePlanners.length;
 
     // 若有啟用自動基準日推算
     if (rot.baseDate) {
@@ -190,20 +299,20 @@ const PlannerModel = {
 
       const diffWeeks = Math.floor((today.getTime() - base.getTime()) / (1000 * 60 * 60 * 24 * 7));
       let actualIndex = (rot.baseIndex !== undefined ? rot.baseIndex : rot.currentIndex) + diffWeeks;
-      while (actualIndex < 0) actualIndex += rot.planners.length;
+      while (actualIndex < 0) actualIndex += activePlanners.length;
 
-      idx = actualIndex % rot.planners.length;
+      idx = actualIndex % activePlanners.length;
       if (rot.currentIndex !== idx) {
         rot.currentIndex = idx;
       }
     }
 
-    const plannerId = rot.planners[idx];
+    const plannerId = activePlanners[idx];
 
     if (presentStaffIds && !presentStaffIds.includes(plannerId)) {
-      for (let i = 1; i < rot.planners.length; i++) {
-        const nextIdx = (idx + i) % rot.planners.length;
-        const nextId = rot.planners[nextIdx];
+      for (let i = 1; i < activePlanners.length; i++) {
+        const nextIdx = (idx + i) % activePlanners.length;
+        const nextId = activePlanners[nextIdx];
         if (presentStaffIds.includes(nextId)) {
           return { id: nextId, isDeputy: true, originalId: plannerId };
         }
@@ -297,11 +406,11 @@ async function initializeDefaultData() {
     if (resp.ok) {
       const data = await resp.json();
 
-      // 重要：啟動時強制清除 localStorage 並以 data.json 為準
-      // 這樣當 data/data.json 被更新時，網頁一重新整理就會同步
       Object.values(STORAGE_KEYS).forEach(key => localStorage.removeItem(key));
 
       localStorage.setItem(STORAGE_KEYS.STAFF, JSON.stringify(data.staff || []));
+      localStorage.setItem(STORAGE_KEYS.DEPARTMENTS, JSON.stringify(data.departments || []));
+      localStorage.setItem(STORAGE_KEYS.ROLES, JSON.stringify(data.roles || []));
       localStorage.setItem(STORAGE_KEYS.AREAS, JSON.stringify(data.areas || []));
       localStorage.setItem(STORAGE_KEYS.PLANNER, JSON.stringify(data.plannerRotation || { planners: [], currentIndex: 0 }));
       localStorage.setItem(STORAGE_KEYS.SCHEDULES, JSON.stringify(data.schedules || []));
@@ -309,7 +418,7 @@ async function initializeDefaultData() {
       // 標記版本
       localStorage.setItem(STORAGE_KEYS.DATA_VER, String(DATA_VERSION));
 
-      console.log('✅ 已成功強制從 data.json 載入最新全公司共用設定！');
+      console.log('✅ 已成功從 data.json 載入預設初始資料！');
     } else {
       throw new Error('無法讀取 data.json (HTTP ' + resp.status + ')');
     }

@@ -217,6 +217,47 @@
         </div>
         <div id="gasUrlStatus" style="margin-top:8px;font-size:0.8rem;color:var(--text-muted);"></div>
       </div>
+
+      <!-- 新增：部門管理 -->
+      <div class="card" style="margin-bottom:16px;">
+        <div class="card-header">
+          <div class="card-title"><span class="icon">🏢</span> 部門管理</div>
+          <button class="btn btn-primary btn-sm" id="addDeptBtn">＋ 新增部門</button>
+        </div>
+        <div style="overflow-x: auto;">
+          <table class="data-table" id="deptTable">
+            <thead>
+              <tr>
+                <th>部門名稱</th>
+                <th>排序權重 (小到大)</th>
+                <th style="text-align:right;">操作</th>
+              </tr>
+            </thead>
+            <tbody id="deptTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- 新增：角色管理 -->
+      <div class="card" style="margin-bottom:16px;">
+        <div class="card-header">
+          <div class="card-title"><span class="icon">🎭</span> 角色管理</div>
+          <button class="btn btn-primary btn-sm" id="addRoleBtn">＋ 新增角色</button>
+        </div>
+        <div style="overflow-x: auto;">
+          <table class="data-table" id="roleTable">
+            <thead>
+              <tr>
+                <th>角色名稱</th>
+                <th>排序權重 (大到小)</th>
+                <th style="text-align:right;">操作</th>
+              </tr>
+            </thead>
+            <tbody id="roleTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+
       <div class="card">
         <div class="card-header">
           <div class="card-title"><span class="icon">💾</span> 資料備份與還原</div>

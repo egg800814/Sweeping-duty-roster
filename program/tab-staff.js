@@ -25,15 +25,21 @@ function renderStaffTable() {
     }
 
     // 依部門與職稱排序
-    const sortOrder = ['管理部', '營業部', '新事業部', '技術部', '其他', '未分類'];
     const USER_SEQUENCE = ["s11", "s07", "s08", "s14", "s18", "s22", "s10", "s13", "s19", "s21", "s27", "s23", "s28", "s06", "s05", "s02", "s04", "s12", "s15", "s16", "s17", "s20", "s24", "s25", "s26"];
 
     const getRank = (s) => {
-    const dIdx = sortOrder.indexOf(s.department || '未分類');
-    const deptScore = (dIdx === -1 ? 99 : dIdx) * 1000;
-    const roleScore = s.role === 'manager' ? -100 : 0;
+    // 依據 DepartmentModel.sortOrder
+    const dept = DepartmentModel.getById(s.departmentId);
+    const deptScore = (dept ? dept.sortOrder : 99) * 1000;
+    
+    // 依據 RoleModel.weight (越小越前面)
+    const role = RoleModel.getById(s.roleId);
+    const roleScore = role ? (role.weight * 10) : 990;
+    
+    // 自定義順序
     const seqIdx = USER_SEQUENCE.indexOf(s.id);
     const seqScore = seqIdx === -1 ? 900 : seqIdx;
+    
     return deptScore + roleScore + seqScore;
     };
 
@@ -50,11 +56,15 @@ function renderStaffTable() {
         restrict.push('排除:' + areaNames.join(','));
     }
 
+    const deptName = DepartmentModel.getById(s.departmentId)?.name || '未分類';
+    const roleName = RoleModel.getById(s.roleId)?.name || '一般';
+    const rotateTag = s.isRotate === false ? '<span class="badge badge-warning" style="margin-left:4px;font-size:0.65rem;">不輪班</span>' : '';
+
     return '<tr>' +
-        '<td>' + (s.department || '未分類') + '</td>' +
-        '<td><strong>' + s.name + '</strong>' + (restrict.length ? '<br><small style="color:var(--warning)">' + restrict.join(',') + '</small>' : '') + '</td>' +
+        '<td>' + deptName + '</td>' +
+        '<td><strong>' + s.name + '</strong>' + rotateTag + (restrict.length ? '<br><small style="color:var(--warning)">' + restrict.join(',') + '</small>' : '') + '</td>' +
         '<td><span class="gender-badge ' + s.gender + '">' + (s.gender === 'male' ? '♂' : '♀') + '</span></td>' +
-        '<td>' + (s.role === 'manager' ? '<span class="badge badge-warning">部長</span>' : '一般') + '</td>' +
+        '<td>' + roleName + '</td>' +
         '<td>' + (s.active ? '在職' : '停用') + '</td>' +
         '<td>' + (s.isDefault ? '是' : '否') + '</td>' +
         '<td class="actions">' +
@@ -69,18 +79,22 @@ document.getElementById('addStaffBtn').addEventListener('click', () => {
     '<option value="' + a.id + '">' + a.name + '</option>'
     ).join('');
 
+    const depsHtml = DepartmentModel.getAll().map(d => '<option value="' + d.id + '">' + d.name + '</option>').join('');
+    const rolesHtml = RoleModel.getAll().map(r => '<option value="' + r.id + '">' + r.name + '</option>').join('');
+
     openModal(
     '<div class="modal-header"><h3 class="modal-title">新增人員</h3><button class="modal-close" onclick="closeModal()">✕</button></div>' +
-    '<div class="form-group"><label>部門</label><select class="form-select" id="modalStaffDept"><option value="管理部">管理部</option><option value="營業部">營業部</option><option value="新事業部">新事業部</option><option value="技術部" selected>技術部</option></select></div>' +
+    '<div class="form-group"><label>部門</label><select class="form-select" id="modalStaffDept">' + depsHtml + '</select></div>' +
     '<div class="form-group"><label>姓名</label><input class="form-input" id="modalStaffName" placeholder="請輸入姓名" autofocus></div>' +
     '<div class="form-row">' +
     '<div class="form-group"><label>性別</label><select class="form-select" id="modalStaffGender"><option value="male">♂ 男</option><option value="female">♀ 女</option></select></div>' +
-    '<div class="form-group"><label>角色</label><select class="form-select" id="modalStaffRole"><option value="regular">一般</option><option value="manager">部長</option></select></div>' +
+    '<div class="form-group"><label>角色</label><select class="form-select" id="modalStaffRole">' + rolesHtml + '</select></div>' +
     '</div>' +
     '<div class="form-row">' +
     '<div class="form-group"><label>預設每日出勤</label><select class="form-select" id="modalStaffDefault"><option value="true">是</option><option value="false">否</option></select></div>' +
-    '<div class="form-group"><label>樓層限制</label><select class="form-select" id="modalStaffFloor"><option value="">無限制</option><option value="1">僅 1 樓</option><option value="2">僅 2 樓</option></select></div>' +
+    '<div class="form-group"><label>參與負責人輪值</label><select class="form-select" id="modalStaffRotate"><option value="true">是</option><option value="false">否 (例如高階主管)</option></select></div>' +
     '</div>' +
+    '<div class="form-group"><label>樓層限制</label><select class="form-select" id="modalStaffFloor"><option value="">無限制</option><option value="1">僅 1 樓</option><option value="2">僅 2 樓</option></select></div>' +
     '<div class="form-group"><label>排除區域（可多選，按住 Ctrl）</label><select class="form-select" id="modalStaffExclude" multiple style="height:100px;">' + areasForExclude + '</select></div>' +
     '<div class="modal-footer"><button class="btn btn-outline btn-sm" onclick="closeModal()">取消</button><button class="btn btn-primary btn-sm" onclick="saveNewStaff()">新增</button></div>'
     );
@@ -96,10 +110,11 @@ window.saveNewStaff = function () {
 
     StaffModel.add({
     name,
-    department: document.getElementById('modalStaffDept').value,
+    departmentId: document.getElementById('modalStaffDept').value,
     gender: document.getElementById('modalStaffGender').value,
-    role: document.getElementById('modalStaffRole').value,
+    roleId: document.getElementById('modalStaffRole').value,
     isDefault: document.getElementById('modalStaffDefault').value === 'true',
+    isRotate: document.getElementById('modalStaffRotate').value === 'true',
     floorRestriction: floorVal ? parseInt(floorVal) : null,
     excludeAreas,
     });
@@ -123,21 +138,22 @@ window.editStaff = function (id) {
     '<option value="' + a.id + '" ' + ((s.excludeAreas || []).includes(a.id) ? 'selected' : '') + '>' + a.name + '</option>'
     ).join('');
 
-    const depts = ['管理部', '營業部', '新事業部', '技術部'];
-    const deptOptions = depts.map(d => '<option value="' + d + '" ' + (s.department === d ? 'selected' : '') + '>' + d + '</option>').join('');
+    const depsHtml = DepartmentModel.getAll().map(d => '<option value="' + d.id + '" ' + (s.departmentId === d.id ? 'selected' : '') + '>' + d.name + '</option>').join('');
+    const rolesHtml = RoleModel.getAll().map(r => '<option value="' + r.id + '" ' + (s.roleId === r.id ? 'selected' : '') + '>' + r.name + '</option>').join('');
 
     openModal(
     '<div class="modal-header"><h3 class="modal-title">編輯人員</h3><button class="modal-close" onclick="closeModal()">✕</button></div>' +
-    '<div class="form-group"><label>部門</label><select class="form-select" id="modalStaffDept">' + deptOptions + '</select></div>' +
+    '<div class="form-group"><label>部門</label><select class="form-select" id="modalStaffDept">' + depsHtml + '</select></div>' +
     '<div class="form-group"><label>姓名</label><input class="form-input" id="modalStaffName" value="' + s.name + '"></div>' +
     '<div class="form-row">' +
     '<div class="form-group"><label>性別</label><select class="form-select" id="modalStaffGender"><option value="male" ' + (s.gender === 'male' ? 'selected' : '') + '>♂ 男</option><option value="female" ' + (s.gender === 'female' ? 'selected' : '') + '>♀ 女</option></select></div>' +
-    '<div class="form-group"><label>角色</label><select class="form-select" id="modalStaffRole"><option value="regular" ' + (s.role !== 'manager' ? 'selected' : '') + '>一般</option><option value="manager" ' + (s.role === 'manager' ? 'selected' : '') + '>部長</option></select></div>' +
+    '<div class="form-group"><label>角色</label><select class="form-select" id="modalStaffRole">' + rolesHtml + '</select></div>' +
     '</div>' +
     '<div class="form-row">' +
     '<div class="form-group"><label>狀態</label><select class="form-select" id="modalStaffActive"><option value="true" ' + (s.active ? 'selected' : '') + '>在職</option><option value="false" ' + (!s.active ? 'selected' : '') + '>停用</option></select></div>' +
-    '<div class="form-group"><label>預設每日出勤</label><select class="form-select" id="modalStaffDefault"><option value="true" ' + (s.isDefault ? 'selected' : '') + '>是</option><option value="false" ' + (!s.isDefault ? 'selected' : '') + '>否</option></select></div>' +
+    '<div class="form-group"><label>參與負責人輪值</label><select class="form-select" id="modalStaffRotate"><option value="true" ' + (s.isRotate !== false ? 'selected' : '') + '>是</option><option value="false" ' + (s.isRotate === false ? 'selected' : '') + '>否 (例如高階主管)</option></select></div>' +
     '</div>' +
+    '<div class="form-group"><label>預設每日出勤</label><select class="form-select" id="modalStaffDefault"><option value="true" ' + (s.isDefault ? 'selected' : '') + '>是</option><option value="false" ' + (!s.isDefault ? 'selected' : '') + '>否</option></select></div>' +
     '<div class="form-group"><label>樓層限制</label><select class="form-select" id="modalStaffFloor"><option value="">無限制</option><option value="1" ' + (s.floorRestriction === 1 ? 'selected' : '') + '>僅 1 樓</option><option value="2" ' + (s.floorRestriction === 2 ? 'selected' : '') + '>僅 2 樓</option></select></div>' +
     '<div class="form-group"><label>排除區域（可多選，按住 Ctrl）</label><select class="form-select" id="modalStaffExclude" multiple style="height:100px;">' + areasForExclude + '</select></div>' +
     '<div class="modal-footer"><button class="btn btn-outline btn-sm" onclick="closeModal()">取消</button><button class="btn btn-primary btn-sm" onclick="updateStaff(\'' + id + '\')">儲存</button></div>'
@@ -151,10 +167,11 @@ window.updateStaff = function (id) {
 
     StaffModel.update(id, {
     name: document.getElementById('modalStaffName').value.trim(),
-    department: document.getElementById('modalStaffDept').value,
+    departmentId: document.getElementById('modalStaffDept').value,
     gender: document.getElementById('modalStaffGender').value,
-    role: document.getElementById('modalStaffRole').value,
+    roleId: document.getElementById('modalStaffRole').value,
     active: document.getElementById('modalStaffActive').value === 'true',
+    isRotate: document.getElementById('modalStaffRotate').value === 'true',
     isDefault: document.getElementById('modalStaffDefault').value === 'true',
     floorRestriction: floorVal ? parseInt(floorVal) : null,
     excludeAreas,

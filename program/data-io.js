@@ -16,6 +16,8 @@ const DataIO = {
         exportedAt: new Date().toISOString(),
         gasApiUrl: typeof GAS_API_URL !== 'undefined' ? GAS_API_URL : '',
         staff: StaffModel.getAll(),
+        departments: DepartmentModel.getAll(),
+        roles: RoleModel.getAll(),
         areas: AreaModel.getAll(),
         plannerRotation: PlannerModel.get(),
         schedules: ScheduleModel.getAll(),
@@ -54,6 +56,8 @@ const DataIO = {
             }
             }
             if (data.staff) StaffModel.save(data.staff);
+            if (data.departments) DepartmentModel.save(data.departments);
+            if (data.roles) RoleModel.save(data.roles);
             if (data.areas) AreaModel.save(data.areas);
             if (data.plannerRotation) PlannerModel.save(data.plannerRotation);
             if (data.schedules) saveData(STORAGE_KEYS.SCHEDULES, data.schedules);

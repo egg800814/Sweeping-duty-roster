@@ -66,15 +66,23 @@ const PlannerService = {
 
     getRotationOverview() {
     const rot = PlannerModel.get();
-    return rot.planners.map((pid, idx) => {
+    
+    // 確保名單中僅包含 isRotate !== false 的人員，過濾掉任何不該輪班的高階主管
+    const activePlanners = rot.planners.filter(pid => {
+        const s = StaffModel.getById(pid);
+        return s && s.isRotate !== false;
+    });
+
+    return activePlanners.map((pid, idx) => {
         const staff = StaffModel.getById(pid);
-        // 代理人 = 下一位
-        const nextIdx = (idx + 1) % rot.planners.length;
-        const deputy = StaffModel.getById(rot.planners[nextIdx]);
+        
+        // 代理人 = 下一位有參與輪班的同仁
+        const nextIdx = (idx + 1) % activePlanners.length;
+        const deputy = StaffModel.getById(activePlanners[nextIdx]);
 
         return {
         index: idx,
-        isCurrent: idx === rot.currentIndex % rot.planners.length,
+        isCurrent: idx === rot.currentIndex % activePlanners.length,
         staffId: pid,
         staffName: staff ? staff.name : '未知',
         deputyName: deputy ? deputy.name : '無',

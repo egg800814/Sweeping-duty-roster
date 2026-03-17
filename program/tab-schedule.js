@@ -86,7 +86,8 @@ function renderStaffCheckboxes() {
   const departments = {};
 
   staff.forEach(s => {
-    const dept = s.department || '未分類';
+    const deptObj = DepartmentModel.getById(s.departmentId);
+    const dept = deptObj ? deptObj.name : '未分類';
     if (!departments[dept]) departments[dept] = [];
     departments[dept].push(s);
   });
@@ -101,18 +102,23 @@ function renderStaffCheckboxes() {
   }
 
   let html = '';
-  const sortOrder = ['管理部', '營業部', '新事業部', '技術部', '其他', '未分類'];
+  // 從 DepartmentModel 取得排序好的部門列表
+  const deptList = DepartmentModel.getAll().sort((a, b) => a.sortOrder - b.sortOrder);
+  const deptSortOrder = deptList.map(d => d.name);
+  deptSortOrder.push('未分類'); // 確保未分類在最後
+
   const USER_SEQUENCE = ["s11", "s07", "s08", "s14", "s18", "s22", "s10", "s13", "s19", "s21", "s27", "s23", "s28", "s06", "s05", "s02", "s04", "s12", "s15", "s16", "s17", "s20", "s24", "s25", "s26"];
 
   const getStaffRank = (s) => {
-    if (s.role === 'manager') return -1;
+    const role = RoleModel.getById(s.roleId);
+    if (role && role.weight <= 10) return -1; // 高權重角色置頂
     const idx = USER_SEQUENCE.indexOf(s.id);
     return idx === -1 ? 999 : idx;
   };
 
   const deptKeys = Object.keys(departments).sort((a, b) => {
-    const idxA = sortOrder.indexOf(a);
-    const idxB = sortOrder.indexOf(b);
+    const idxA = deptSortOrder.indexOf(a);
+    const idxB = deptSortOrder.indexOf(b);
     return (idxA === -1 ? 99 : idxA) - (idxB === -1 ? 99 : idxB);
   });
 
@@ -124,13 +130,18 @@ function renderStaffCheckboxes() {
 
     html += departments[dept].map(s => {
       const isSelected = sessionPresentStaffIds.includes(s.id);
-      const roleTag = s.role === 'manager' ? '<span class="badge badge-warning" style="margin-left:4px;font-size:0.65rem;">部長</span>' : '';
+      const role = RoleModel.getById(s.roleId);
+      let roleTag = '';
+      if (role && role.weight <= 10 && role.name !== '一般') {
+          roleTag = '<span class="badge badge-warning" style="margin-left:4px;font-size:0.65rem;">' + role.name + '</span>';
+      }
       const restrictTag = s.floorRestriction ? '<span class="badge badge-info" style="margin-left:4px;font-size:0.65rem;">限' + s.floorRestriction + 'F</span>' : '';
+      const rotateTag = '';
 
       return '<label class="checkbox-item ' + (isSelected ? 'checked' : '') + '" data-id="' + s.id + '">' +
         '<input type="checkbox" ' + (isSelected ? 'checked' : '') + '>' +
         '<span class="checkbox-mark"></span>' +
-        '<span class="checkbox-label">' + s.name + roleTag + restrictTag + '</span>' +
+        '<span class="checkbox-label">' + s.name + roleTag + restrictTag + rotateTag + '</span>' +
         '<span class="gender-badge ' + s.gender + '">' + (s.gender === 'male' ? '♂' : '♀') + '</span>' +
         '</label>';
     }).join('');

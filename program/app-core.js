@@ -54,7 +54,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Modal 關閉
     const overlay = document.getElementById('modalOverlay');
     if (overlay) {
-        overlay.addEventListener('click', (e) => {
+        overlay.addEventListener('mousedown', (e) => {
             if (e.target === e.currentTarget) closeModal();
         });
     }
@@ -93,6 +93,9 @@ function initTabEvents() {
                 break;
             case 'schedule':
                 if (typeof refreshSchedulePanel === 'function') refreshSchedulePanel();
+                break;
+            case 'settings':
+                if (typeof renderSettingsTables === 'function') renderSettingsTables();
                 break;
         }
     });
