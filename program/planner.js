@@ -6,7 +6,7 @@
  *   - advanceToNextWeek()：手動推進至下一週
  *   - movePlanner()：調整輪值順序（上移/下移）
  *   - setBaseDateToToday()：設定自動輪值基準日
- *   - getRotationOverview()：取得完整輪值列表供 UI 渲染
+ *   - getRotationOverview()：取得完整輪值列表供 UI 渲染，並 [V13.0] 動態過濾掉 isRotate === false 的人員
  *   - updateRotation()：更新輪值名單
  *   - setCurrentIndex()：直接設定本週負責人索引
  */

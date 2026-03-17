@@ -2,10 +2,10 @@
  * 【data-io.js】
  * 資料備份與還原功能（DataIO）。
  * 提供三項操作：
- *   - exportAll()：將所有人員、區域、輪值、排班紀錄與 GAS URL
+ *   - [V13.0] exportAll()：將所有人員、區域、輪值、排班、部門、角色與 GAS URL
  *     打包成 JSON 檔案下載至本機。
- *   - importAll(file)：讀取使用者上傳的 JSON 備份檔，
- *     還原所有資料至 localStorage，並同步更新 GAS URL 欄位。
+ *   - [V13.0] importAll(file)：讀取使用者上傳的 JSON 備份檔，
+ *     還原所有資料（含 departments 與 roles）至 localStorage，並同步更新 GAS URL。
  *   - clearAll()：清除 localStorage 中所有系統資料（不可復原）。
  */
 

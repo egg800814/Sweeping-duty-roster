@@ -10,6 +10,7 @@
  *   - updatePlannerBanner()：更新本週負責人顯示
  *   - renderOptionalToggles()：渲染可選區域勾選清單
  *   - loadAttendanceFromGAS()：從 GAS 雲端載入今日出勤名單
+ *   - [V13.0] renderStaffCheckboxes()：動態依照 DepartmentModel 與 RoleModel 將人員分組合併渲染
  *   - 自動排班按鈕（generateBtn）與追加人員按鈕（addLateBtn）
  *   - renderScheduleResult()：渲染排班結果卡片（含拖曳接收區）
  *   - fetchConfirmStatuses()：每 10 秒輪詢 GAS 取得確認狀態並著色

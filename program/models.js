@@ -3,18 +3,22 @@
  * 資料模型與 localStorage 存取層。
  * 定義系統版本號、儲存鍵值常數、UUID 產生器，
  * 以及所有 CRUD 模型物件：
- *   - StaffModel：人員的新增、查詢、更新、刪除
+ *   - DepartmentModel (V13.0 新增)：部門的彈性新增、查詢、排序
+ *   - RoleModel (V13.0 新增)：職稱角色的權重管理
+ *   - StaffModel：人員的新增、查詢、更新、刪除 (含 isRotate 參與輪值設定)
  *   - AreaModel：清掃區域的管理
  *   - PlannerModel：每週負責人輪值資料的讀寫與自動日期推算
  *   - ScheduleModel：每日排班紀錄的儲存與查詢
  *   - HistoryModel：歷史指派次數與近期區域的統計
- * 最後提供 initializeDefaultData()，在啟動時強制從
- * ../data/data.json 同步最新共用設定至 localStorage。
+ * 
+ * 初始化機制 (V13.0 改版)：
+ *   - 執行 `initializeDefaultData()` 時，將**無條件全數清除本機 localStorage**
+ *     並強制從 `../data/data.json` 載入最新全域共用設定，確保所有使用者畫面同步對齊。
  */
 
 // program/models.js — 資料模型與 localStorage 存取層
 
-const DATA_VERSION = 12.0; // v12.0: 加入自動輪值與順序調整機制
+const DATA_VERSION = 13.0; // v13.0: 引入動態部門與角色模型，並強制重置讀取 JSON 資料機制
 
 const STORAGE_KEYS = {
   STAFF: 'cleaning_staff',

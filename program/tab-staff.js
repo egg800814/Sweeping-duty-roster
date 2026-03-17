@@ -2,7 +2,8 @@
  * 【tab-staff.js】
  * 「人員管理」頁籤與排班拖曳互動邏輯。
  * 包含：
- *   - renderStaffTable()：依部門與自定義順序渲染人員清單表格
+ *   - [V13.0] renderStaffTable()：依 DepartmentModel / RoleModel 動態聯集，並顯示「不輪班」狀態
+ *   - [V13.0] 處理「新增/更新」人員視窗中 isRotate 與動態清單的雙向綁定
  *   - 新增人員按鈕（addStaffBtn）開啟 Modal 並呼叫 saveNewStaff()
  *   - editStaff(id)：開啟編輯 Modal 並呼叫 updateStaff(id)
  *   - deleteStaff(id)：確認後刪除人員並同步更新排班頁面與 GAS
