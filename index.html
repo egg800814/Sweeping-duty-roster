@@ -43,23 +43,50 @@
         (async () => {
             try {
                 // 先從 data.json 取得 GAS_API_URL
-                const dataRes = await fetch('../data/data.json?v=' + Date.now(), { cache: 'no-store' });
+                const dataRes = await fetch('data/data.json?v=' + Date.now(), { cache: 'no-store' });
                 const localData = await dataRes.json();
                 const GAS_DEFAULT_URL = localData.gasApiUrl || 'YOUR_GAS_API_URL_HERE';
 
-                // 如果有本地儲存的自訂 URL，優先使用
-                const GAS_URL = localStorage.getItem('gas_api_url') || GAS_DEFAULT_URL;
+                // --- 下方：使用與管理後台 (setup.html) 一致的邏輯計算本週負責人 ---
+                const rot = localData.plannerRotation;
+                const staffList = localData.staff;
+                let calculatedPlannerName = "";
 
+                if (rot && rot.planners && rot.planners.length > 0) {
+                    let idx = rot.currentIndex % rot.planners.length;
+                    // 若有啟用自動基準日推算
+                    if (rot.baseDate) {
+                        const base = new Date(rot.baseDate);
+                        base.setHours(0, 0, 0, 0);
+                        const today = new Date();
+                        today.setHours(0, 0, 0, 0);
+
+                        const diffWeeks = Math.floor((today.getTime() - base.getTime()) / (1000 * 60 * 60 * 24 * 7));
+                        let actualIndex = (rot.baseIndex !== undefined ? rot.baseIndex : rot.currentIndex) + diffWeeks;
+                        while (actualIndex < 0) actualIndex += rot.planners.length;
+                        idx = actualIndex % rot.planners.length;
+                    }
+                    const pId = rot.planners[idx];
+                    const pStaff = (staffList || []).find(s => s.id === pId);
+                    if (pStaff) calculatedPlannerName = pStaff.name;
+                }
+
+                // 初始顯示本地計算出的負責人
+                if (calculatedPlannerName) {
+                    document.getElementById('plannerInfo').textContent = '📋 今日責任者：' + calculatedPlannerName;
+                }
+
+                // --- 下方：嘗試從雲端抓取即時資料（作為更新） ---
                 if (!GAS_URL || GAS_URL === 'YOUR_GAS_API_URL_HERE') return;
-
-                const res = await fetch(GAS_URL);
-                const data = await res.json();
-
-                // 支援物件格式 result.todayPlanner 或 陣列格式 data[0].todayPlanner
-                const planner = data.todayPlanner || (Array.isArray(data) && data.length > 0 ? data[0].todayPlanner : null);
-
-                if (planner) {
-                    document.getElementById('plannerInfo').textContent = '📋 今日責任者：' + planner;
+                try {
+                    const res = await fetch(GAS_URL);
+                    const data = await res.json();
+                    const cloudPlanner = data.todayPlanner || (Array.isArray(data) && data.length > 0 ? data[0].todayPlanner : null);
+                    if (cloudPlanner) {
+                        document.getElementById('plannerInfo').textContent = '📋 今日責任者：' + cloudPlanner;
+                    }
+                } catch (e) {
+                    console.warn('無法從雲端讀取即時責任者，維持顯示本地計算值');
                 }
             } catch (e) {
                 console.warn('無法讀取今日責任者:', e);
