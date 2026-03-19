@@ -1,0 +1,62 @@
+# 虛擬環境，每臺機器自己建
+.venv/
+.venv_xp/
+# 可留，但裡面若有個人路徑/Token 就忽略
+.vscode/
+**/__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+.coverage
+htmlcov/
+.ipynb_checkpoints
+
+# 執行期才長出來的目錄
+# 產生的報表、暫存、下載檔
+#data/
+# 日誌
+logs/
+# 若你照先前建議改成 runtime/* 放資料
+runtime/
+*.log
+*.tmp
+*.bak
+#*.csv
+
+# 機密
+.env
+*.key
+*.pem
+config/.env
+config/settings_local.yaml
+config/secrets.json
+
+# OS 垃圾
+.DS_Store
+Thumbs.db
+
+# 使用怎新增的資料
+config/user_params.json
+
+# =========================
+# AI 編輯器與 OpenSpec 設定
+# =========================
+
+# 1. 忽略 AI 編輯器的內部大腦與暫存狀態 (絕對要忽略)
+.agent/
+.gemini/
+
+# 2. 忽略 OpenSpec 工具可能產生的本機快取或暫存檔
+.openspec_cache/
+*.openspec.tmp
+
+# 3. (選擇性) 歷史歸檔區
+# 如果您認為專案活很久之後 archive 會太大，不想把過去的任務紀錄推送到 Git 上，可以取消下方註解。
+# 但一般建議「保留」在 Git 中，因為 Markdown 檔案很小，且能當作歷史決策紀錄。
+# openspec/changes/archive/
