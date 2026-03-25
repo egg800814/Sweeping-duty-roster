@@ -308,6 +308,7 @@ const PlannerModel = {
       idx = actualIndex % activePlanners.length;
       if (rot.currentIndex !== idx) {
         rot.currentIndex = idx;
+        this.save(rot); // [修正] 確保自動推算出的索引有存回 localStorage
       }
     }
 

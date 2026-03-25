@@ -65,7 +65,8 @@ const PlannerService = {
     },
 
     getRotationOverview() {
-    const rot = PlannerModel.get();
+        PlannerModel.getCurrentPlanner(); // [修正] 運算並同步最新的輪值索引至 localStorage
+        const rot = PlannerModel.get();
     
     // 確保名單中僅包含 isRotate !== false 的人員，過濾掉任何不該輪班的高階主管
     const activePlanners = rot.planners.filter(pid => {
