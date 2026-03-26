@@ -710,7 +710,7 @@ body {
 .staff-chip {
   padding: 4px 12px;
   border-radius: 20px;
-  font-size: 0.8rem;
+  font-size: 1.0rem;
   font-weight: 600;
 }
 
@@ -799,6 +799,7 @@ body {
 
 .assignment-area {
   font-weight: 700;
+  font-size: 1.2rem;
   display: flex !important;    /* 強制使用 Flex 佈局 */
   flex-direction: row !important; /* 強制橫向排列 */
   align-items: center;
