@@ -1,6 +1,6 @@
 {
   "version": 3,
-  "exportedAt": "2026-03-17T06:19:59.004Z",
+  "exportedAt": "2026-04-01T07:47:20.078Z",
   "gasApiUrl": "https://script.google.com/macros/s/AKfycbylxdMoFwSyolG-xonnAUzz5Obzp-qruRMf2NpPajdoXmnvreja_4aVyj3fAZzVyOZm/exec",
   "staff": [
     {
@@ -116,34 +116,6 @@
       "isRotate": true
     },
     {
-      "id": "s09",
-      "name": "陳逸人",
-      "gender": "male",
-      "active": true,
-      "isDefault": false,
-      "role": "manager",
-      "floorRestriction": null,
-      "excludeAreas": [],
-      "department": "營業部",
-      "departmentId": "d2",
-      "roleId": "r1",
-      "isRotate": false
-    },
-    {
-      "id": "s10",
-      "name": "黃聖文",
-      "gender": "female",
-      "active": true,
-      "isDefault": true,
-      "role": "regular",
-      "floorRestriction": null,
-      "excludeAreas": [],
-      "department": "營業部",
-      "departmentId": "d2",
-      "roleId": "r2",
-      "isRotate": true
-    },
-    {
       "id": "s11",
       "name": "黃珮珊",
       "gender": "female",
@@ -202,20 +174,6 @@
     {
       "id": "s15",
       "name": "李承哲",
-      "gender": "male",
-      "active": true,
-      "isDefault": true,
-      "role": "regular",
-      "floorRestriction": null,
-      "excludeAreas": [],
-      "department": "技術部",
-      "departmentId": "d4",
-      "roleId": "r2",
-      "isRotate": true
-    },
-    {
-      "id": "s16",
-      "name": "許漢德",
       "gender": "male",
       "active": true,
       "isDefault": true,
@@ -314,20 +272,6 @@
       "isRotate": true
     },
     {
-      "id": "s23",
-      "name": "林聖家",
-      "gender": "male",
-      "active": true,
-      "isDefault": true,
-      "role": "regular",
-      "floorRestriction": null,
-      "excludeAreas": [],
-      "department": "新事業部",
-      "departmentId": "d3",
-      "roleId": "r2",
-      "isRotate": true
-    },
-    {
       "id": "s24",
       "name": "徐明億",
       "gender": "male",
@@ -366,20 +310,6 @@
       "excludeAreas": [],
       "department": "技術部",
       "departmentId": "d4",
-      "roleId": "r2",
-      "isRotate": true
-    },
-    {
-      "id": "s27",
-      "name": "張東華",
-      "gender": "female",
-      "active": true,
-      "isDefault": true,
-      "role": "regular",
-      "floorRestriction": null,
-      "excludeAreas": [],
-      "department": "新事業部",
-      "departmentId": "d3",
       "roleId": "r2",
       "isRotate": true
     },
@@ -633,12 +563,9 @@
       "s18",
       "s22",
       "s29",
-      "s10",
       "s13",
       "s19",
       "s21",
-      "s23",
-      "s27",
       "s28",
       "s06",
       "s05",
@@ -646,7 +573,6 @@
       "s04",
       "s12",
       "s15",
-      "s16",
       "s17",
       "s20",
       "s24",
@@ -654,7 +580,7 @@
       "s26"
     ],
     "currentIndex": 18,
-    "baseDate": "2026-03-17",
+    "baseDate": "2026-04-01",
     "baseIndex": 18
   },
   "schedules": []
