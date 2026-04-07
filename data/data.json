@@ -1,6 +1,6 @@
 {
   "version": 3,
-  "exportedAt": "2026-04-01T07:47:20.078Z",
+  "exportedAt": "2026-04-07T01:41:18.815Z",
   "gasApiUrl": "https://script.google.com/macros/s/AKfycbylxdMoFwSyolG-xonnAUzz5Obzp-qruRMf2NpPajdoXmnvreja_4aVyj3fAZzVyOZm/exec",
   "staff": [
     {
@@ -150,8 +150,10 @@
       "active": true,
       "isDefault": true,
       "role": "regular",
-      "floorRestriction": null,
-      "excludeAreas": [],
+      "floorRestriction": 2,
+      "excludeAreas": [
+        "a4"
+      ],
       "department": "營業部",
       "departmentId": "d2",
       "roleId": "r2",
@@ -579,9 +581,9 @@
       "s25",
       "s26"
     ],
-    "currentIndex": 18,
-    "baseDate": "2026-04-01",
-    "baseIndex": 18
+    "currentIndex": 20,
+    "baseDate": "2026-04-07",
+    "baseIndex": 20
   },
   "schedules": []
 }
