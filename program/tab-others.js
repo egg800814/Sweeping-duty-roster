@@ -11,6 +11,13 @@
  *   - 資料管理：匯出 JSON（exportBtn）、匯入 JSON（importBtn/importFile）、
  *     清除全部資料（clearAllBtn）、重置為預設資料（resetDefaultBtn）
  *   - boot()：應用程式啟動函數，依序載入資料、初始化排班頁面與可選區域
+ *
+ * 變更履歷：
+ *   V14.0  2026-03-26
+ *          - renderRotation() 所有操作按鈕的 onclick 加入 syncRotationToGAS() 呼叫
+ *          - advanceWeekBtn click handler 結尾加入 syncRotationToGAS()
+ *          - boot() 中於 initializeDefaultData() 後加入 fetchAndApplyCloudRotation()
+ *            確保重整頁面時從雲端覆蓋本機快取，解決多台電腦數據不一致的問題
  */
 
 // ═══════════════════════════════════════
@@ -28,16 +35,16 @@ function renderRotation() {
 
     container.innerHTML = overview.map(item =>
     '<div class="rotation-item ' + (item.isCurrent ? 'current' : '') + '" style="display:flex; justify-content:space-between; align-items:center;">' +
-    '<div style="cursor:pointer; flex: 1;" onclick="PlannerService.setCurrentIndex(' + item.index + ');renderRotation();updatePlannerBanner();showToast(\'已切換本週負責人為 ' + item.staffName + '\',\'success\');">' +
+    '<div style="cursor:pointer; flex: 1;" onclick="PlannerService.setCurrentIndex(' + item.index + ');renderRotation();updatePlannerBanner();syncRotationToGAS();showToast(\'已切換本週負責人為 ' + item.staffName + '\',\'success\');">' +
     '<span class="rotation-index">' + (item.index + 1) + '</span>' +
     '<span class="rotation-name">' + item.staffName + '</span>' +
     (item.isCurrent ? '<span class="badge badge-success">本週</span>' : '') +
     '<span class="rotation-deputy">代理人：' + item.deputyName + '</span>' +
     '</div>' +
     '<div style="display:flex; gap: 4px;">' +
-    '<button class="btn-icon" style="padding: 4px;" onclick="event.stopPropagation(); PlannerService.movePlanner(' + item.index + ', -1); renderRotation(); updatePlannerBanner();" ' + (item.index === 0 ? 'disabled' : '') + ' title="往上移">🔼</button>' +
-    '<button class="btn-icon" style="padding: 4px;" onclick="event.stopPropagation(); PlannerService.movePlanner(' + item.index + ', 1); renderRotation(); updatePlannerBanner();" ' + (item.index === overview.length - 1 ? 'disabled' : '') + ' title="往下移">🔽</button>' +
-    '<button class="btn-icon warning" style="padding: 4px; border: 1px solid var(--warning);" onclick="event.stopPropagation(); if(confirm(\'是否將此人設為今日起算的自動輪值基準點？\\n(重整並不會洗白，需要重新匯出 data.json 或匯入才會真正生效)\')) { PlannerService.setBaseDateToToday(' + item.index + '); renderRotation(); updatePlannerBanner(); showToast(\'已更新自動輪值基準日！請記得匯出.\', \'success\'); }" title="設為自動輪值基準點">📅</button>' +
+    '<button class="btn-icon" style="padding: 4px;" onclick="event.stopPropagation(); PlannerService.movePlanner(' + item.index + ', -1); renderRotation(); updatePlannerBanner(); syncRotationToGAS();" ' + (item.index === 0 ? 'disabled' : '') + ' title="往上移">🔼</button>' +
+    '<button class="btn-icon" style="padding: 4px;" onclick="event.stopPropagation(); PlannerService.movePlanner(' + item.index + ', 1); renderRotation(); updatePlannerBanner(); syncRotationToGAS();" ' + (item.index === overview.length - 1 ? 'disabled' : '') + ' title="往下移">🔽</button>' +
+    '<button class="btn-icon warning" style="padding: 4px; border: 1px solid var(--warning);" onclick="event.stopPropagation(); if(confirm(\'是否將此人設為今日起算的自動輪值基準點？\\n(重整並不會洗白，需要重新匯出 data.json 或匯入才會真正生效)\')) { PlannerService.setBaseDateToToday(' + item.index + '); renderRotation(); updatePlannerBanner(); syncRotationToGAS(); showToast(\'已更新自動輪值基準日！請記得匯出.\', \'success\'); }" title="設為自動輪值基準點">📅</button>' +
     '</div>' +
     '</div>'
     ).join('');
@@ -47,6 +54,7 @@ document.getElementById('advanceWeekBtn').addEventListener('click', () => {
     PlannerService.advanceToNextWeek();
     renderRotation();
     updatePlannerBanner();
+    syncRotationToGAS();
     showToast('已手動推進至下一週', 'success');
 });
 
@@ -340,12 +348,15 @@ window.deleteRole = function(id) {
 // ─── 應用程式啟動入口 ───
 async function boot() {
   await initializeDefaultData();
+
+  // ▼▼▼ [V14.0] 從雲端讀取最新輪值設定，蓋過 data.json 的舊資料 ▼▼▼
+  await fetchAndApplyCloudRotation();
+
   refreshSchedulePanel();
   renderOptionalToggles();
 
   // ▼▼▼ 自動執行載入雲端出勤 ▼▼▼
   if (typeof loadAttendanceFromGAS === 'function') {
-    // 稍微延遲 0.5 秒，確保 Google Sheets 網址等所有設定都讀取完畢後再觸發
     setTimeout(() => {
       loadAttendanceFromGAS();
     }, 500);
@@ -356,4 +367,41 @@ async function boot() {
   }
 }
 
-boot();
+/**
+ * fetchAndApplyCloudRotation()
+ * 從 GAS 讀取 [PlannerRotation] 最新輪值設定，覆蓋 localStorage 被 data.json 重置的舊資料。
+ * 成功後重新渲染輪值列表與排班 Banner。
+ */
+async function fetchAndApplyCloudRotation() {
+  const gasUrl = GAS_API_URL || GAS_DEFAULT_URL;
+  if (!gasUrl || gasUrl.includes('YOUR_GAS')) return;
+
+  try {
+    const res = await fetch(gasUrl + '?type=rotation', { cache: 'no-store' });
+    const rotData = await res.json();
+
+    if (rotData.error || !rotData.planners || rotData.planners.length === 0) {
+      console.warn('[fetchAndApplyCloudRotation] 雲端尚無輪值資料，維持 data.json 設定');
+      return;
+    }
+
+    // 組裝與 localStorage 相容的 plannerRotation 結構
+    const cloudRot = {
+      planners: rotData.planners,
+      baseDate: rotData.baseDate || '',
+      baseIndex: rotData.baseIndex !== undefined ? rotData.baseIndex : 0,
+      currentIndex: PlannerModel.get().currentIndex || 0,
+    };
+    saveData(STORAGE_KEYS.PLANNER, cloudRot);
+    console.log('✅ [V14.0] 已從雲端載入最新輪值設定');
+
+    // 重新渲染輪值頁籤與排班 Banner
+    if (typeof renderRotation === 'function') renderRotation();
+    if (typeof updatePlannerBanner === 'function') updatePlannerBanner();
+
+  } catch (err) {
+    console.warn('[fetchAndApplyCloudRotation] 雲端讀取失敗，維持本地設定:', err.message);
+  }
+}
+
+boot();

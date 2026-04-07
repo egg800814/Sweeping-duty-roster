@@ -9,7 +9,34 @@
  *   - showToast()：顯示右下角浮動通知
  *   - openModal() / closeModal()：Modal 彈窗的開關控制
  *   - Tab 切換事件監聽（點擊頁籤時渲染對應內容）
+ *
+ * 變更履歷：
+ *   V14.1  2026-04-07
+ *          - 新增 APP_VERSION / APP_CODENAME 常數，自動將版本號注入所有
+ *            帶有 .app-version / .app-codename 類別的 HTML 元素
+ *          - 修正 syncRotationToGAS()：不再依賴可能傳回 null 的
+ *            PlannerService.getTodayPlanner(null)，改為直接用公式計算今日値班者
+ *          - syncRotationToGAS() 新增 成功診斷韟 記錄
+ *   V14.0  2026-03-26
+ *          - 新增 syncRotationToGAS()：將輪值設定同步至 GAS [PlannerRotation]
+ *            並順便更新 [Schedule].I1 今日責任者
  */
+
+// ─── 版本管理 (V14.1 自動化) ───
+const APP_VERSION = "V14.1";
+const APP_CODENAME = "Cloud Sync";
+
+// 自動將版本號導向至 UI 中帶有 .app-version 類別的元素
+document.addEventListener('DOMContentLoaded', () => {
+    const versionElements = document.querySelectorAll('.app-version');
+    versionElements.forEach(el => {
+        el.textContent = APP_VERSION;
+    });
+    const codenameElements = document.querySelectorAll('.app-codename');
+    codenameElements.forEach(el => {
+        el.textContent = APP_CODENAME;
+    });
+});
 
 // ─── 排班狀態管理 ───
 let currentScheduleState = null;
@@ -262,3 +289,68 @@ function closeModal() {
     const overlay = document.getElementById('modalOverlay');
     if (overlay) overlay.classList.remove('active');
 }
+
+// ─── [V14.0 新增] 輪值設定同步至雲端 ───
+/**
+ * syncRotationToGAS()
+ * 將目前的輪值設定（順序、基準日、基準序號）以 fire-and-forget 方式同步至 [PlannerRotation] 工作表。
+ * 呼叫時機：輪值頁籤的任何修改操作（移動順序、切換週次、推進、設定基準點）之後。
+ */
+function syncRotationToGAS() {
+    const gasUrl = GAS_API_URL || GAS_DEFAULT_URL;
+    if (!gasUrl || gasUrl.includes('YOUR_GAS')) return;
+
+    try {
+        const rot = PlannerModel.get();
+        if (!rot || !rot.planners || rot.planners.length === 0) return;
+
+        const allStaff = StaffModel.getAll();
+        const staffNames = {};
+        allStaff.forEach(s => { staffNames[s.id] = s.name; });
+
+        // [V14.0] 直接用公式計算今日值班者（與 index.html 一致），不依賴 PlannerService
+        let todayPlannerName = '';
+        try {
+            let idx = rot.baseIndex !== undefined ? rot.baseIndex : (rot.currentIndex || 0);
+            if (rot.baseDate) {
+                const base = new Date(rot.baseDate);
+                base.setHours(0, 0, 0, 0);
+                const now = new Date();
+                now.setHours(0, 0, 0, 0);
+                const diffWeeks = Math.floor((now.getTime() - base.getTime()) / (1000 * 60 * 60 * 24 * 7));
+                idx = ((idx + diffWeeks) % rot.planners.length + rot.planners.length) % rot.planners.length;
+            } else {
+                idx = ((rot.currentIndex || 0) % rot.planners.length + rot.planners.length) % rot.planners.length;
+            }
+            const plannerId = rot.planners[idx];
+            const plannerStaff = allStaff.find(s => s.id === plannerId);
+            if (plannerStaff) todayPlannerName = plannerStaff.name;
+        } catch (e) {
+            console.warn('[syncRotationToGAS] 計算今日值班者失敗:', e);
+        }
+
+        const payload = {
+            type: 'saveRotation',
+            planners: rot.planners,
+            staffNames: staffNames,
+            baseDate: rot.baseDate || '',
+            baseIndex: rot.baseIndex !== undefined ? rot.baseIndex : rot.currentIndex || 0,
+            todayPlannerName: todayPlannerName, // [V14.0] 同步時順便更新 I1
+        };
+
+        console.log('[syncRotationToGAS] 雲端同步中...', payload);
+
+        fetch(gasUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify(payload),
+        }).then(res => res.json())
+          .then(data => {
+              console.log('[syncRotationToGAS] 同步成功:', data);
+          })
+          .catch(err => console.warn('[syncRotationToGAS] 失敗:', err));
+    } catch (err) {
+        console.warn('[syncRotationToGAS] 例外:', err);
+    }
+}
+

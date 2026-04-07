@@ -1,16 +1,28 @@
 /**
- * 【整合版 Google Apps Script - V13.0】
- * 
+ * 【code.gs】 — Google Apps Script 雲端 API
+ * 版本： V14.1
+ *
+ * 變更履歷：
+ *   V14.1  2026-04-07
+ *          - 修正 saveRotation 分支：強制鎖定 "Schedule" 工作表來更新 I1，
+ *            避免將名字寫入錯誤頁籤的問題
+ *          - saveRotation 回傳值新增 planner 欄位以利除錯
+ *   V14.0  2026-03-26
+ *          - 新增 doGet  `?type=rotation`：讀取 [PlannerRotation] 輪值設定
+ *          - 新增 doPost `type=saveRotation`：寫入 [PlannerRotation] 輪值順序
+ *          - 新增 doPost `type=updateI1`：更新 [Schedule].I1 今日責任者
+ *
  * 本腳本為「打掃區域分配系統」的雲端後端，負責與 Google Sheets 試算表雙向同步資料。
- * 
+ *
  * 依賴工作表：
  * 1. [Schedule]: 存放每日排班結果 (A-H 欄) 與今日負責人 (I1 儲存格)。
  * 2. [StaffData]: 存放目前最新的出勤人員名冊 (姓名、性別)，供確認系統查詢性別用。
- * 3. [Logs]: (選用) 紀錄系統同步紀錄。
- * 
+ * 3. [PlannerRotation]: (V14.0 新增) 存放輪值設定（順序、基準日等），實現跨裝置同步。
+ * 4. [Logs]: (選用) 紀錄系統同步紀錄。
+ *
  * 核心進入點：
- * - doGet(e): 讀取排班資料。支援 ?type=admin 提供完整後台同步，或預設提供給確認系統顯示。
- * - doPost(e): 寫入排班資料。模式 A (assignments) 為全量更新；模式 B (areaCode) 為單點行為確認。
+ * - doGet(e): 讀取排班資料。支援 ?type=admin / ?type=rotation。
+ * - doPost(e): 寫入資料。新增 type=saveRotation / type=updateI1 分支。
  * - doOptions(e): 處理預檢請求 (CORS PREFLIGHT)。
  */
 
@@ -18,11 +30,62 @@ function doGet(e) {
   // --- 1. 基本連結與參數初始化 ---
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var sheet = ss.getSheetByName("Schedule") || ss.getSheets()[0];
-  var data = sheet.getDataRange().getValues();
   var timezone = Session.getScriptTimeZone();
   var today = Utilities.formatDate(new Date(), timezone, "yyyy-MM-dd");
 
-  var isAdmin = e && e.parameter && e.parameter.type === "admin";
+  var reqType = e && e.parameter && e.parameter.type ? e.parameter.type : "";
+  var isAdmin = reqType === "admin";
+
+  // =========================================================================
+  // [V14.0 新增] type=rotation：讀取 [PlannerRotation] 工作表
+  // =========================================================================
+  if (reqType === "rotation") {
+    try {
+      var rotSheet = ss.getSheetByName("PlannerRotation");
+      if (!rotSheet || rotSheet.getLastRow() < 2) {
+        return ContentService.createTextOutput(
+          JSON.stringify({ error: "no_rotation_data" }),
+        ).setMimeType(ContentService.MimeType.JSON);
+      }
+      var rotData = rotSheet.getDataRange().getValues();
+      var planners = [];
+      var staffNames = {};
+      var baseDate = "";
+      var baseIndex = 0;
+      for (var r = 1; r < rotData.length; r++) {
+        var staffId = String(rotData[r][1] || "").trim();
+        var staffName = String(rotData[r][2] || "").trim();
+        var isRotate = rotData[r][3];
+        if (
+          staffId &&
+          (isRotate === true || String(isRotate).toUpperCase() === "TRUE")
+        ) {
+          planners.push(staffId);
+          if (staffName) staffNames[staffId] = staffName;
+        }
+        if (r === 1) {
+          baseDate = String(rotData[r][4] || "").trim();
+          baseIndex = parseInt(rotData[r][5] || "0", 10) || 0;
+        }
+      }
+      var currentI1 = String(sheet.getRange("I1").getValue() || "").trim();
+      return ContentService.createTextOutput(
+        JSON.stringify({
+          planners: planners,
+          staffNames: staffNames,
+          baseDate: baseDate,
+          baseIndex: baseIndex,
+          currentI1: currentI1,
+        }),
+      ).setMimeType(ContentService.MimeType.JSON);
+    } catch (err) {
+      return ContentService.createTextOutput(
+        JSON.stringify({ error: err.message }),
+      ).setMimeType(ContentService.MimeType.JSON);
+    }
+  }
+
+  var data = sheet.getDataRange().getValues();
 
   // 1. 讀取 StaffData (人員名冊)
   var staffGenderMap = {};
@@ -85,9 +148,11 @@ function doGet(e) {
         }
         areaItem["gender" + (k + 1)] = g;
       }
-      
+
       // 兼容新版 genders 陣列
-      areaItem.genders = names.map(function(n) { return staffGenderMap[n] || ""; });
+      areaItem.genders = names.map(function (n) {
+        return staffGenderMap[n] || "";
+      });
 
       assignments.push(areaItem);
     }
@@ -99,12 +164,16 @@ function doGet(e) {
       date: today,
       todayPlanner: plannerName,
       staffMeta: staffMeta,
-      assignments: assignments
+      assignments: assignments,
     };
-    return ContentService.createTextOutput(JSON.stringify(adminResult)).setMimeType(ContentService.MimeType.JSON);
+    return ContentService.createTextOutput(
+      JSON.stringify(adminResult),
+    ).setMimeType(ContentService.MimeType.JSON);
   } else {
     // 預設舊版相容：回傳陣列 (不包裝在 assignments 屬性內)
-    return ContentService.createTextOutput(JSON.stringify(assignments)).setMimeType(ContentService.MimeType.JSON);
+    return ContentService.createTextOutput(
+      JSON.stringify(assignments),
+    ).setMimeType(ContentService.MimeType.JSON);
   }
 }
 
@@ -115,6 +184,83 @@ function doPost(e) {
 
   try {
     var params = JSON.parse(e.postData.contents);
+
+    // =========================================================================
+    // [V14.0 新增] type=saveRotation：寫入輪值設定至 [PlannerRotation] 工作表
+    // =========================================================================
+    if (params.type === "saveRotation") {
+      var rotSheet = ss.getSheetByName("PlannerRotation");
+      if (!rotSheet) {
+        rotSheet = ss.insertSheet("PlannerRotation");
+        rotSheet
+          .getRange(1, 1, 1, 6)
+          .setValues([
+            [
+              "seq",
+              "staffId",
+              "staffName",
+              "isRotate",
+              "baseDate",
+              "baseIndex",
+            ],
+          ]);
+      }
+      // 清空舊資料
+      if (rotSheet.getLastRow() > 1) {
+        rotSheet.getRange(2, 1, rotSheet.getLastRow() - 1, 6).clearContent();
+      }
+      // 寫入新資料
+      var planners = params.planners || [];
+      var staffNames = params.staffNames || {};
+      var rotRows = planners.map(function (id, idx) {
+        return [
+          idx + 1,
+          id,
+          staffNames[id] || "",
+          true,
+          idx === 0 ? params.baseDate || "" : "",
+          idx === 0
+            ? params.baseIndex !== undefined
+              ? params.baseIndex
+              : 0
+            : "",
+        ];
+      });
+      if (rotRows.length > 0) {
+        rotSheet.getRange(2, 1, rotRows.length, 6).setValues(rotRows);
+      }
+      
+      // [V14.0] 強制鎖定名為 "Schedule" 的工作表更新 I1，避免寫錯地方
+      var targetScheduleSheet = ss.getSheetByName("Schedule");
+      var todayPlannerName = String(params.todayPlannerName || "").trim();
+      
+      if (targetScheduleSheet && todayPlannerName) {
+        targetScheduleSheet.getRange("I1").setValue(todayPlannerName);
+      } else if (todayPlannerName) {
+        // 備案：如果找不到 Schedule，寫入 doPost 開頭定義的預設 sheet
+        sheet.getRange("I1").setValue(todayPlannerName);
+      }
+
+      return ContentService.createTextOutput(JSON.stringify({ 
+        status: "success", 
+        message: "輪值設定已更新", 
+        i1Updated: !!todayPlannerName,
+        planner: todayPlannerName 
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
+
+    // =========================================================================
+    // [V14.0 新增] type=updateI1：更新今日值班者至 [Schedule].I1（比對後選擇性寫入）
+    // =========================================================================
+    if (params.type === "updateI1") {
+      var newName = String(params.plannerName || "").trim();
+      if (newName) {
+        sheet.getRange("I1").setValue(newName);
+      }
+      return ContentService.createTextOutput(
+        JSON.stringify({ status: "success" }),
+      ).setMimeType(ContentService.MimeType.JSON);
+    }
 
     // =========================================================================
     // 模式 A：由管理頁面傳來的「大規模全量同步」 (由 setup.html 觸發)

@@ -16,6 +16,12 @@
  *   - fetchConfirmStatuses()：每 10 秒輪詢 GAS 取得確認狀態並著色
  *   - 儲存排班（saveScheduleBtn）與列印（printBtn）按鈕
  *   - 隔天放假核取方塊（holidayLabel/holidayToggle）事件
+ *
+ * 變更履歷：
+ *   V14.1  2026-04-07
+ *          - updatePlannerBanner() 加入同步重新渲染排班結果的邏輯：
+ *            當輪值設定變更時，若畫面已有排班結果，排班負責人欄位即時更新，
+ *            無需重新整理頁面
  */
 
 // ==========================================
@@ -256,6 +262,17 @@ function updatePlannerBanner() {
   } else {
     nameEl.textContent = '尚未設定';
     noteEl.style.display = 'none';
+  }
+
+  // [V14.1 新增] 若目前下方已有排班結果顯示，則同步重新渲染一次結果區域
+  // 這樣「排班結果的標題」裡的負責人姓名才會即時從舊的變成新的，不需要重新整理頁面。
+  if (typeof currentScheduleState !== 'undefined' && currentScheduleState && 
+      currentScheduleState.assignments && currentScheduleState.assignments.length > 0) {
+    renderScheduleResult(
+      currentScheduleState.assignments, 
+      currentScheduleState.skippedAreas, 
+      currentScheduleState.warnings
+    );
   }
 }
 

@@ -1,6 +1,6 @@
 # MDI 打掃區域分配系統 — 現狀規格書 (Baseline)
 
-> **版本**：v13.0（逆向工程文件，建立日期：2026-03-19）  
+> **版本**：v14.1（更新日期：2026-04-07）  
 > **文件目的**：記錄系統現有架構、資料結構、API 端點與核心業務邏輯，作為導入 OpenSpec 框架的起點基準。
 
 ---
@@ -28,9 +28,10 @@
            ▼
 ┌──────────────────────────────────────────────────┐
 │  Google Sheets（雲端資料庫）                      │
-│    ├── [Schedule]  — 每日排班明細                 │
-│    ├── [StaffData] — 今日出勤人員名冊             │
-│    └── [Logs]      — (選用) 系統操作紀錄          │
+│    ├── [Schedule]        — 每日排班明細           │
+│    ├── [StaffData]       — 今日出勤人員名冊       │
+│    ├── [PlannerRotation] — 輪值順序與基準日設定   │
+│    └── [Logs]            — (選用) 系統操作紀錄   │
 └──────────────────────────────────────────────────┘
 ```
 
@@ -179,6 +180,17 @@
 | H | status4 | 第 4 位 |
 | I1 | plannerName | 今日責任者姓名（單格，不 append 每排班行） |
 
+#### [PlannerRotation] 工作表（V14.0 新增）
+
+| 欄 | 欄位 | 說明 |
+|---|---|---|
+| A | seq | 順序編號 (1-based) |
+| B | staffId | 人員 ID (e.g. s07) |
+| C | staffName | 人員姓名 |
+| D | isRotate | 是否參與輪值 (TRUE/FALSE) |
+| E | baseDate | 基準日期（僅第 1 筆填入，e.g. 2026-03-13） |
+| F | baseIndex | 基準索引（僅第 1 筆填入，e.g. 16） |
+
 #### [StaffData] 工作表
 
 | 欄位 | 說明 |
@@ -233,6 +245,19 @@
 }
 ```
 
+**回應（rotation 模式，V14.0 新增）**：`GET ?type=rotation`
+
+```json
+{
+  "planners": ["s11", "s07", "s08"],
+  "staffNames": { "s11": "林書豪", "s07": "李哲旭" },
+  "baseDate": "2026-03-13",
+  "baseIndex": 16,
+  "currentI1": "李哲旭"
+}
+```
+- 若 `[PlannerRotation]` 不存在或為空：回傳 `{ "error": "no_rotation_data" }`。
+
 ---
 
 ### 3.2 `POST /` — 寫入資料（兩種模式）
@@ -262,6 +287,28 @@
 - `plannerName` 有值：更新 Schedule.I1。
 
 **成功回應**：`{ "status": "success", "message": "..." }`
+
+#### 模式 C：輪值設定同步（V14.0 新增，由 `setup.html` 觸發）
+
+```json
+{
+  "type": "saveRotation",
+  "planners": ["s11", "s07"],
+  "staffNames": { "s11": "林書豪" },
+  "baseDate": "2026-03-13",
+  "baseIndex": 16,
+  "todayPlannerName": "李哲旭"
+}
+```
+- 清空並重寫 `[PlannerRotation]`。
+- 若帶有 `todayPlannerName`，同步更新 `[Schedule].I1`（一次 POST 完成兩件事）。
+
+#### 模式 D：I1 校正（V14.0 新增，由 `index.html` 觸發）
+
+```json
+{ "type": "updateI1", "plannerName": "李哲旭" }
+```
+- 寫入 `[Schedule].I1`，為 index.html 發現 I1 過期時的輕量校正請求。
 
 #### 模式 B：局部狀態操作（由 `viewer.html` 觸發）
 
