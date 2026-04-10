@@ -1,6 +1,6 @@
 {
-  "version": 3,
-  "exportedAt": "2026-04-07T01:41:18.815Z",
+  "version": 2,
+  "exportedAt": "2026-04-10T06:17:03.105Z",
   "gasApiUrl": "https://script.google.com/macros/s/AKfycbylxdMoFwSyolG-xonnAUzz5Obzp-qruRMf2NpPajdoXmnvreja_4aVyj3fAZzVyOZm/exec",
   "staff": [
     {
@@ -342,6 +342,42 @@
       "departmentId": "d1",
       "roleId": "r2",
       "isRotate": true
+    },
+    {
+      "id": "s30",
+      "name": "野満行雄",
+      "gender": "male",
+      "active": true,
+      "isDefault": true,
+      "isRotate": true,
+      "roleId": "r2",
+      "departmentId": "d2",
+      "floorRestriction": null,
+      "excludeAreas": []
+    },
+    {
+      "id": "s31",
+      "name": "賴品邑",
+      "gender": "male",
+      "active": true,
+      "isDefault": true,
+      "isRotate": true,
+      "roleId": "r2",
+      "departmentId": "d2",
+      "floorRestriction": null,
+      "excludeAreas": []
+    },
+    {
+      "id": "s32",
+      "name": "王上恩",
+      "gender": "male",
+      "active": true,
+      "isDefault": true,
+      "isRotate": true,
+      "roleId": "r2",
+      "departmentId": "d4",
+      "floorRestriction": null,
+      "excludeAreas": []
     }
   ],
   "departments": [
@@ -568,7 +604,9 @@
       "s13",
       "s19",
       "s21",
+      "s31",
       "s28",
+      "s30",
       "s06",
       "s05",
       "s02",
@@ -579,11 +617,12 @@
       "s20",
       "s24",
       "s25",
-      "s26"
+      "s26",
+      "s32"
     ],
-    "currentIndex": 20,
-    "baseDate": "2026-04-07",
-    "baseIndex": 20
+    "baseDate": "2026-04-10",
+    "baseIndex": 22,
+    "currentIndex": 22
   },
   "schedules": []
 }
