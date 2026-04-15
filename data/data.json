@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "exportedAt": "2026-04-10T06:17:03.105Z",
+  "exportedAt": "2026-04-15T02:26:20.232Z",
   "gasApiUrl": "https://script.google.com/macros/s/AKfycbylxdMoFwSyolG-xonnAUzz5Obzp-qruRMf2NpPajdoXmnvreja_4aVyj3fAZzVyOZm/exec",
   "staff": [
     {
@@ -417,7 +417,7 @@
   "areas": [
     {
       "id": "a1",
-      "name": "2樓_廚房",
+      "name": "❶ 2樓_廚房",
       "floor": 2,
       "priority": "daily",
       "genderRestriction": "female",
@@ -428,7 +428,7 @@
     },
     {
       "id": "a2",
-      "name": "2樓_女廁",
+      "name": "❷ 2樓_女廁",
       "floor": 2,
       "priority": "daily",
       "genderRestriction": "female",
@@ -439,7 +439,7 @@
     },
     {
       "id": "a3",
-      "name": "2樓_男廁",
+      "name": "❸ 2樓_男廁",
       "floor": 2,
       "priority": "daily",
       "genderRestriction": "malePreferred",
@@ -450,7 +450,7 @@
     },
     {
       "id": "a4",
-      "name": "2樓_陽台",
+      "name": "❹ 2樓_陽台",
       "floor": 2,
       "priority": "daily",
       "genderRestriction": "malePreferred",
@@ -461,7 +461,7 @@
     },
     {
       "id": "a5",
-      "name": "1樓_食堂",
+      "name": "❺ 1樓_食堂",
       "floor": 1,
       "priority": "daily",
       "genderRestriction": "none",
@@ -472,7 +472,7 @@
     },
     {
       "id": "a6",
-      "name": "1樓_男廁",
+      "name": "❻ 1樓_男廁",
       "floor": 1,
       "priority": "daily",
       "genderRestriction": "malePreferred",
@@ -483,7 +483,7 @@
     },
     {
       "id": "a7",
-      "name": "1樓_女廁",
+      "name": "❼ 1樓_女廁",
       "floor": 1,
       "priority": "daily",
       "genderRestriction": "female",
@@ -494,7 +494,7 @@
     },
     {
       "id": "a8",
-      "name": "2樓_走廊、玄關、應接室",
+      "name": "❽ 2樓_走廊、玄關、應接室",
       "floor": 2,
       "priority": "flexible",
       "genderRestriction": "none",
@@ -505,7 +505,7 @@
     },
     {
       "id": "a9",
-      "name": "2樓_事務所全區",
+      "name": "❾ 2樓_事務所全區",
       "floor": 2,
       "priority": "flexible",
       "genderRestriction": "none",
@@ -516,7 +516,7 @@
     },
     {
       "id": "a10",
-      "name": "2樓_多目的室",
+      "name": "❿ 2樓_多目的室",
       "floor": 2,
       "priority": "optional",
       "genderRestriction": "none",
@@ -527,7 +527,7 @@
     },
     {
       "id": "a11",
-      "name": "1樓_陽台",
+      "name": "⓫ 1樓_陽台",
       "floor": 1,
       "priority": "flexible",
       "genderRestriction": "none",
@@ -538,7 +538,7 @@
     },
     {
       "id": "a12",
-      "name": "1樓_會議室1",
+      "name": "⓬ 1樓_會議室1",
       "floor": 1,
       "priority": "optional",
       "genderRestriction": "none",
@@ -549,7 +549,7 @@
     },
     {
       "id": "a13",
-      "name": "1樓_走廊",
+      "name": "⓭ 1樓_走廊",
       "floor": 1,
       "priority": "flexible",
       "genderRestriction": "none",
@@ -560,7 +560,7 @@
     },
     {
       "id": "a14",
-      "name": "1~2樓_樓梯",
+      "name": "⓮ 1~2樓_樓梯",
       "floor": 0,
       "priority": "flexible",
       "genderRestriction": "none",
@@ -571,7 +571,7 @@
     },
     {
       "id": "a15",
-      "name": "1樓_無塵室更衣室",
+      "name": "⓯ 1樓_無塵室更衣室",
       "floor": 1,
       "priority": "flexible",
       "genderRestriction": "none",
@@ -582,7 +582,7 @@
     },
     {
       "id": "a16",
-      "name": "1樓_女子更衣室",
+      "name": "⓰ 1樓_女子更衣室",
       "floor": 1,
       "priority": "flexible",
       "genderRestriction": "female",
@@ -620,9 +620,9 @@
       "s26",
       "s32"
     ],
-    "baseDate": "2026-04-10",
-    "baseIndex": 22,
-    "currentIndex": 22
+    "baseDate": "Mon Apr 13 2026 00:00:00 GMT+0800 (台北標準時間)",
+    "baseIndex": 23,
+    "currentIndex": 23
   },
   "schedules": []
 }
