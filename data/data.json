@@ -1,6 +1,6 @@
 {
-  "version": 2,
-  "exportedAt": "2026-04-15T02:26:20.232Z",
+  "version": 3,
+  "exportedAt": "2026-06-22T08:56:08.738Z",
   "gasApiUrl": "https://script.google.com/macros/s/AKfycbylxdMoFwSyolG-xonnAUzz5Obzp-qruRMf2NpPajdoXmnvreja_4aVyj3fAZzVyOZm/exec",
   "staff": [
     {
@@ -116,20 +116,6 @@
       "isRotate": true
     },
     {
-      "id": "s11",
-      "name": "黃珮珊",
-      "gender": "female",
-      "active": true,
-      "isDefault": true,
-      "role": "regular",
-      "floorRestriction": null,
-      "excludeAreas": [],
-      "department": "管理部",
-      "departmentId": "d1",
-      "roleId": "r2",
-      "isRotate": true
-    },
-    {
       "id": "s12",
       "name": "黃智傑",
       "gender": "male",
@@ -147,13 +133,11 @@
       "id": "s13",
       "name": "陳瑞雯",
       "gender": "female",
-      "active": true,
+      "active": false,
       "isDefault": true,
       "role": "regular",
-      "floorRestriction": 2,
-      "excludeAreas": [
-        "a4"
-      ],
+      "floorRestriction": null,
+      "excludeAreas": [],
       "department": "營業部",
       "departmentId": "d2",
       "roleId": "r2",
@@ -170,20 +154,6 @@
       "excludeAreas": [],
       "department": "管理部",
       "departmentId": "d1",
-      "roleId": "r2",
-      "isRotate": true
-    },
-    {
-      "id": "s15",
-      "name": "李承哲",
-      "gender": "male",
-      "active": true,
-      "isDefault": true,
-      "role": "regular",
-      "floorRestriction": null,
-      "excludeAreas": [],
-      "department": "技術部",
-      "departmentId": "d4",
       "roleId": "r2",
       "isRotate": true
     },
@@ -264,10 +234,8 @@
       "active": true,
       "isDefault": true,
       "role": "regular",
-      "floorRestriction": 2,
-      "excludeAreas": [
-        "a4"
-      ],
+      "floorRestriction": null,
+      "excludeAreas": [],
       "department": "管理部",
       "departmentId": "d1",
       "roleId": "r2",
@@ -370,6 +338,54 @@
     {
       "id": "s32",
       "name": "王上恩",
+      "gender": "male",
+      "active": true,
+      "isDefault": true,
+      "isRotate": true,
+      "roleId": "r2",
+      "departmentId": "d4",
+      "floorRestriction": null,
+      "excludeAreas": []
+    },
+    {
+      "id": "s33",
+      "name": "連禎均",
+      "gender": "female",
+      "active": true,
+      "isDefault": true,
+      "isRotate": true,
+      "roleId": "r2",
+      "departmentId": "d1",
+      "floorRestriction": null,
+      "excludeAreas": []
+    },
+    {
+      "id": "s34",
+      "name": "田谷信佑",
+      "gender": "male",
+      "active": true,
+      "isDefault": true,
+      "isRotate": true,
+      "roleId": "r2",
+      "departmentId": "d2",
+      "floorRestriction": null,
+      "excludeAreas": []
+    },
+    {
+      "id": "s35",
+      "name": "張聯泓",
+      "gender": "male",
+      "active": true,
+      "isDefault": true,
+      "isRotate": true,
+      "roleId": "r2",
+      "departmentId": "d4",
+      "floorRestriction": null,
+      "excludeAreas": []
+    },
+    {
+      "id": "s36",
+      "name": "秦郁傑",
       "gender": "male",
       "active": true,
       "isDefault": true,
@@ -594,7 +610,6 @@
   ],
   "plannerRotation": {
     "planners": [
-      "s11",
       "s07",
       "s08",
       "s14",
@@ -612,17 +627,20 @@
       "s02",
       "s04",
       "s12",
-      "s15",
       "s17",
       "s20",
       "s24",
       "s25",
       "s26",
-      "s32"
+      "s32",
+      "s33",
+      "s34",
+      "s35",
+      "s36"
     ],
-    "baseDate": "Mon Apr 13 2026 00:00:00 GMT+0800 (台北標準時間)",
-    "baseIndex": 23,
-    "currentIndex": 23
+    "baseDate": "2026-06-22",
+    "baseIndex": 18,
+    "currentIndex": 18
   },
   "schedules": []
 }
